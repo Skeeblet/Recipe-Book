@@ -1,0 +1,66 @@
+Project: Personal Recipe Book PWA
+I'm building a Progressive Web App recipe book as a single HTML file (plain HTML/CSS/JS, no frameworks). I already have a working index.html with the following features already built:
+
+6 recipes organized into category sections: Breakfast, Lunch & Dinner, Sauces
+Tag-based filtering (tags like "high protein", "quick", "vegetarian", etc.)
+Color-coded stat badges per recipe (calories, protein, fiber, fat)
+Smooth scroll and clean mobile-friendly styling
+
+Recipe Card Structure (already built, preserve this exactly)
+Each recipe card contains:
+
+Recipe name and description
+Stat badges: calories, protein, fiber, fat (color-coded)
+Tags for filtering
+Ingredient list (each ingredient is a line item)
+Step-by-step instructions
+Category assignment (Breakfast / Lunch & Dinner / Sauces)
+
+
+Phase 1 — Grocery List Tab (build this first)
+Add a tab navigation system with two tabs: "Recipes" (existing content) and "Grocery List" (new).
+Grocery list requirements:
+
+On each recipe card, each ingredient should be tappable to add it individually to the grocery list
+Each recipe card also needs an "Add all ingredients" button
+The Grocery List tab shows all added items grouped by which recipe they came from
+Items can be checked off while shopping — checked items move to a "Got it" section at the bottom of the list
+The grocery list persists between sessions using localStorage
+A "Clear all" button to reset the entire list
+
+
+Phase 2 — PWA Installability (after Phase 1)
+
+Add a manifest.json so it can be installed to an Android home screen
+Add a service-worker.js for offline support
+App should work fully offline after first load
+
+
+Phase 3 — Recipe Importing (after Phase 2)
+Two import methods:
+3a — AI Import (Claude API)
+
+A text input where the user describes a recipe in plain text
+Calls the Anthropic API (claude-sonnet-4-20250514) and asks it to return structured JSON matching the recipe card schema (name, description, stats, tags, ingredients, steps, category)
+App parses the JSON and renders it as a new recipe card
+New recipes persist via localStorage
+
+3b — URL Import
+
+A URL input field where the user pastes a link to any recipe webpage (e.g. AllRecipes, food blogs, etc.)
+App fetches and parses the page, extracting recipe data into the same structured JSON schema
+Ideally uses the Claude API to do the parsing/extraction intelligently from raw HTML
+Parsed recipe is added as a new card and persisted via localStorage
+
+
+Phase 4 — Smart Grocery & Store Integration (future feature, do not build yet, just be aware so architecture decisions don't block it)
+This is a future phase to keep in mind during planning so nothing we build today makes it harder to add later:
+
+Store inventory scanning — given the current grocery list, query nearby stores for item availability and price
+Store recommendation engine — rank nearby stores by best match based on price, item availability, distance, curbside availability, and other factors
+HEB integration — the user already uses the HEB app for curbside orders; the goal is to link their HEB account to this PWA and have the AI automatically build and submit a curbside order based on the grocery list
+Other store account linking — extensible to other grocers beyond HEB in the future
+
+The architecture should be designed so that the grocery list data is clean, structured, and exportable — making it straightforward to feed into a store API or AI agent in Phase 4.
+
+Current focus: Phase 1 only. Please plan the grocery list tab implementation against my existing index.html.

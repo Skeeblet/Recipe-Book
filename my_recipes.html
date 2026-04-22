@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Meal Prep Recipes</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream: #FAF7F2; --warm-white: #FFFEF9; --brown-dark: #2C1F14; --brown-mid: #6B4C35;
+    --brown-light: #C4956A; --accent: #D4622A; --accent-light: #F2E4D8; --green: #4A6741;
+    --green-light: #EAF0E8; --text-body: #3D2E22; --text-muted: #8C7060; --border: #E8DDD3;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text-body); line-height: 1.6; }
+
+  .cover { background: var(--brown-dark); color: var(--cream); padding: 80px 60px; min-height: 300px; display: flex; flex-direction: column; justify-content: flex-end; position: relative; overflow: hidden; }
+  .cover::before { content: ''; position: absolute; top: -60px; right: -60px; width: 320px; height: 320px; border-radius: 50%; background: var(--accent); opacity: 0.15; }
+  .cover::after { content: ''; position: absolute; bottom: -80px; left: 40px; width: 200px; height: 200px; border-radius: 50%; background: var(--brown-light); opacity: 0.12; }
+  .cover-label { font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--brown-light); margin-bottom: 16px; }
+  .cover h1 { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 600; line-height: 1.1; margin-bottom: 14px; position: relative; z-index: 1; }
+  .cover-sub { font-size: 14px; color: #B8A898; font-weight: 300; position: relative; z-index: 1; }
+
+  .filter-bar { background: var(--warm-white); padding: 22px 60px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(44,31,20,0.07); }
+  .filter-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+  .filter-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+  .ftag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--cream); font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.15s; user-select: none; }
+  .ftag:hover { transform: translateY(-1px); }
+  .ftag .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.6; flex-shrink: 0; }
+  .ftag[data-tag="all"] { color: var(--brown-dark); border-color: var(--brown-dark); }
+  .ftag[data-tag="all"].active { background: var(--brown-dark); color: white; }
+  .ftag[data-tag="breakfast"] { color: #7B5EA7; border-color: #C9B8E8; }
+  .ftag[data-tag="breakfast"].active { background: #7B5EA7; color: white; border-color: #7B5EA7; }
+  .ftag[data-tag="lunch"] { color: #2E7D52; border-color: #A8D5BC; }
+  .ftag[data-tag="lunch"].active { background: #2E7D52; color: white; border-color: #2E7D52; }
+  .ftag[data-tag="dinner"] { color: #1A5F8A; border-color: #A8CDE0; }
+  .ftag[data-tag="dinner"].active { background: #1A5F8A; color: white; border-color: #1A5F8A; }
+  .ftag[data-tag="meal-prep"] { color: var(--accent); border-color: #F0C4A8; }
+  .ftag[data-tag="meal-prep"].active { background: var(--accent); color: white; border-color: var(--accent); }
+  .ftag[data-tag="quick"] { color: #B5860D; border-color: #F0D88A; }
+  .ftag[data-tag="quick"].active { background: #B5860D; color: white; border-color: #B5860D; }
+  .ftag[data-tag="high-protein"] { color: #2E7D52; border-color: #A8D5BC; }
+  .ftag[data-tag="high-protein"].active { background: #2E7D52; color: white; border-color: #2E7D52; }
+  .ftag[data-tag="low-cal"] { color: var(--green); border-color: #B8CEB5; }
+  .ftag[data-tag="low-cal"].active { background: var(--green); color: white; border-color: var(--green); }
+  .ftag[data-tag="sauce"] { color: #8A3A1A; border-color: #D4A898; }
+  .ftag[data-tag="sauce"].active { background: #8A3A1A; color: white; border-color: #8A3A1A; }
+
+  .category-section { padding: 0 60px; }
+  .category-header { display: flex; align-items: center; gap: 14px; padding: 40px 0 20px; border-bottom: 2px solid var(--brown-dark); margin-bottom: 0; }
+  .category-icon { font-size: 20px; }
+  .category-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 600; color: var(--brown-dark); }
+  .category-count { font-size: 13px; color: var(--text-muted); margin-left: auto; }
+  .category-section.all-hidden { display: none; }
+
+  .recipe { padding: 32px 0 28px; border-bottom: 1px solid var(--border); }
+  .recipe.hidden { display: none; }
+  .recipe-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 20px; }
+  .recipe-num { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 5px; }
+  .recipe h2 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: var(--brown-dark); line-height: 1.2; }
+  .recipe-desc { font-size: 14px; color: var(--text-muted); font-weight: 300; margin-top: 5px; }
+  .recipe-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .rtag { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; }
+  .rtag-breakfast { background: #EDE6F7; color: #7B5EA7; }
+  .rtag-lunch { background: #E6F4EC; color: #2E7D52; }
+  .rtag-dinner { background: #E0EEF7; color: #1A5F8A; }
+  .rtag-meal-prep { background: var(--accent-light); color: var(--accent); }
+  .rtag-quick { background: #FDF6E3; color: #B5860D; }
+  .rtag-high-protein { background: #E6F4EC; color: #2E7D52; }
+  .rtag-sauce { background: #F5E8E4; color: #8A3A1A; }
+  .rtag-low-cal { background: var(--green-light); color: var(--green); }
+
+  .stats { display: flex; gap: 7px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 260px; }
+  .stat { text-align: center; padding: 10px 12px; border-radius: 10px; background: var(--accent-light); min-width: 58px; }
+  .stat-val { font-size: 17px; font-weight: 500; color: var(--accent); display: block; }
+  .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; }
+  .stat.green { background: var(--green-light); } .stat.green .stat-val { color: var(--green); }
+  .stat.blue { background: #E8F0FA; } .stat.blue .stat-val { color: #2C5F9E; }
+  .stat.yellow { background: #FDF6E3; } .stat.yellow .stat-val { color: #A87C10; }
+
+  .recipe-body { display: grid; grid-template-columns: 1fr 1.4fr; gap: 32px; align-items: start; }
+  .section-title { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .ingredient-list { list-style: none; }
+  .ingredient-list li { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 14px; gap: 10px; }
+  .ingredient-list li:last-child { border-bottom: none; }
+  .ing-name { color: var(--text-body); } .ing-amount { color: var(--text-muted); font-weight: 500; white-space: nowrap; font-size: 13px; }
+  .steps-list { list-style: none; }
+  .steps-list li { display: flex; gap: 13px; margin-bottom: 14px; font-size: 14px; line-height: 1.65; }
+  .step-num { width: 25px; height: 25px; border-radius: 50%; border: 1.5px solid var(--brown-light); color: var(--brown-mid); font-size: 12px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .notes-box { margin-top: 20px; padding: 14px 18px; border-radius: 10px; background: var(--accent-light); border-left: 3px solid var(--accent); font-size: 13px; color: var(--text-body); line-height: 1.7; grid-column: 1 / -1; }
+  .notes-title { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+
+  .empty-state { display: none; text-align: center; padding: 60px; color: var(--text-muted); font-size: 15px; }
+  .empty-state.visible { display: block; }
+
+  footer { background: var(--brown-dark); color: #8C7060; text-align: center; padding: 28px; font-size: 13px; font-weight: 300; margin-top: 48px; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-label">Weekly meal prep</div>
+  <h1>My Low Calorie<br>Recipe Book</h1>
+  <p class="cover-sub">6 recipes · High protein · High fiber · Under 1,200 cal/day</p>
+</div>
+
+<div class="filter-bar">
+  <div class="filter-label">Filter by tag</div>
+  <div class="filter-tags">
+    <span class="ftag active" data-tag="all" onclick="filterRecipes('all')"><span class="dot"></span>All recipes</span>
+    <span class="ftag" data-tag="breakfast" onclick="filterRecipes('breakfast')"><span class="dot"></span>Breakfast</span>
+    <span class="ftag" data-tag="lunch" onclick="filterRecipes('lunch')"><span class="dot"></span>Lunch</span>
+    <span class="ftag" data-tag="dinner" onclick="filterRecipes('dinner')"><span class="dot"></span>Dinner</span>
+    <span class="ftag" data-tag="meal-prep" onclick="filterRecipes('meal-prep')"><span class="dot"></span>Meal prep</span>
+    <span class="ftag" data-tag="quick" onclick="filterRecipes('quick')"><span class="dot"></span>Quick make</span>
+    <span class="ftag" data-tag="high-protein" onclick="filterRecipes('high-protein')"><span class="dot"></span>High protein</span>
+    <span class="ftag" data-tag="low-cal" onclick="filterRecipes('low-cal')"><span class="dot"></span>Low calorie</span>
+    <span class="ftag" data-tag="sauce" onclick="filterRecipes('sauce')"><span class="dot"></span>Sauces</span>
+  </div>
+</div>
+
+<div class="empty-state" id="empty-state">No recipes match that filter.</div>
+
+<!-- BREAKFAST -->
+<div class="category-section" id="cat-breakfast">
+  <div class="category-header">
+    <span class="category-icon">🌅</span>
+    <span class="category-title">Breakfast</span>
+    <span class="category-count" id="count-breakfast">2 recipes</span>
+  </div>
+
+  <div class="recipe" id="recipe-1" data-tags="breakfast meal-prep high-protein low-cal">
+    <div class="recipe-header">
+      <div>
+        <div class="recipe-num">Recipe 01</div>
+        <h2>Apple Cinnamon Overnight Oats</h2>
+        <p class="recipe-desc">Meal-preppable, high fiber, high protein breakfast — ready to grab from the fridge every morning</p>
+        <div class="recipe-tags">
+          <span class="rtag rtag-breakfast">Breakfast</span>
+          <span class="rtag rtag-meal-prep">Meal prep</span>
+          <span class="rtag rtag-high-protein">High protein</span>
+          <span class="rtag rtag-low-cal">Low calorie</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-val">385</span><span class="stat-label">Cal</span></div>
+        <div class="stat green"><span class="stat-val">20g</span><span class="stat-label">Protein</span></div>
+        <div class="stat blue"><span class="stat-val">8g</span><span class="stat-label">Fiber</span></div>
+        <div class="stat yellow"><span class="stat-val">3g</span><span class="stat-label">Fat</span></div>
+      </div>
+    </div>
+    <div class="recipe-body">
+      <div>
+        <div class="section-title">Ingredients — per jar</div>
+        <ul class="ingredient-list">
+          <li><span class="ing-name">Rolled oats (not instant)</span><span class="ing-amount">½ cup</span></li>
+          <li><span class="ing-name">Nonfat Greek yogurt (Fage 0%)</span><span class="ing-amount">½ cup</span></li>
+          <li><span class="ing-name">Unsweetened almond milk</span><span class="ing-amount">¼ cup</span></li>
+          <li><span class="ing-name">Chia seeds</span><span class="ing-amount">½ tbsp</span></li>
+          <li><span class="ing-name">Sugar free vanilla syrup (Torani)</span><span class="ing-amount">½ tbsp</span></li>
+          <li><span class="ing-name">Vanilla extract</span><span class="ing-amount">¼ tsp</span></li>
+          <li><span class="ing-name">Cinnamon</span><span class="ing-amount">½ tsp</span></li>
+          <li><span class="ing-name">Medium apple, diced fresh each morning</span><span class="ing-amount">1 whole apple</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title">Instructions</div>
+        <ol class="steps-list">
+          <li><div class="step-num">1</div><div>Combine oats, yogurt, almond milk, chia seeds, vanilla syrup, vanilla extract, and cinnamon into your jar. Stir really well — make sure chia seeds don't clump at the bottom.</div></li>
+          <li><div class="step-num">2</div><div>Seal the jar and refrigerate overnight or at least 4 hours. The oats will absorb everything and thicken significantly.</div></li>
+          <li><div class="step-num">3</div><div>In the morning, give it a stir. If too thick, add a small splash of almond milk. Should be creamy and thick, not watery.</div></li>
+          <li><div class="step-num">4</div><div>Dice the whole apple into small chunks and add on top fresh.</div></li>
+        </ol>
+      </div>
+      <div class="notes-box">
+        <div class="notes-title">Notes & tips</div>
+        <strong>Apple:</strong> One whole apple per jar — buy 5 apples for a 5-day week. Always add fresh, never the night before. &nbsp;|&nbsp; <strong>Oats:</strong> Rolled oats only — instant turns to paste overnight. &nbsp;|&nbsp; <strong>Shelf life:</strong> Jars keep 5 days in the fridge. Make all 5 Sunday night. Days 4–5 may thicken — add a splash of almond milk.
+      </div>
+    </div>
+  </div>
+
+  <div class="recipe" id="recipe-2" data-tags="breakfast quick high-protein low-cal">
+    <div class="recipe-header">
+      <div>
+        <div class="recipe-num">Recipe 02</div>
+        <h2>Veggie Egg White Omelette</h2>
+        <p class="recipe-desc">Quick, high protein breakfast ready in under 10 minutes — loaded with veggies</p>
+        <div class="recipe-tags">
+          <span class="rtag rtag-breakfast">Breakfast</span>
+          <span class="rtag rtag-quick">Quick make</span>
+          <span class="rtag rtag-high-protein">High protein</span>
+          <span class="rtag rtag-low-cal">Low calorie</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-val">135</span><span class="stat-label">Cal</span></div>
+        <div class="stat green"><span class="stat-val">20g</span><span class="stat-label">Protein</span></div>
+        <div class="stat blue"><span class="stat-val">4g</span><span class="stat-label">Fiber</span></div>
+        <div class="stat yellow"><span class="stat-val">1g</span><span class="stat-label">Fat</span></div>
+      </div>
+    </div>
+    <div class="recipe-body">
+      <div>
+        <div class="section-title">Ingredients — 1 serving</div>
+        <ul class="ingredient-list">
+          <li><span class="ing-name">Liquid egg whites (carton)</span><span class="ing-amount">¾ cup</span></li>
+          <li><span class="ing-name">Bell pepper diced small</span><span class="ing-amount">½ pepper</span></li>
+          <li><span class="ing-name">Baby spinach</span><span class="ing-amount">½ cup</span></li>
+          <li><span class="ing-name">Mushrooms sliced</span><span class="ing-amount">3 mushrooms</span></li>
+          <li><span class="ing-name">Yellow onion diced small</span><span class="ing-amount">¼ onion</span></li>
+          <li><span class="ing-name">Garlic powder</span><span class="ing-amount">pinch</span></li>
+          <li><span class="ing-name">Salt and black pepper</span><span class="ing-amount">pinch</span></li>
+          <li><span class="ing-name">Cooking spray</span><span class="ing-amount">as needed</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title">Instructions</div>
+        <ol class="steps-list">
+          <li><div class="step-num">1</div><div>Spray a non-stick pan with cooking spray over medium heat. Add onion and bell pepper and cook for 2–3 minutes until slightly softened. Add mushrooms and cook another minute.</div></li>
+          <li><div class="step-num">2</div><div>Add spinach and stir until just wilted, about 30 seconds. Push all vegetables to one side of the pan.</div></li>
+          <li><div class="step-num">3</div><div>Pour egg whites over the vegetables and let spread across the pan. Season with garlic powder, salt, and pepper. Do not stir — let it set on the bottom for about 2 minutes.</div></li>
+          <li><div class="step-num">4</div><div>Once the edges look set and the top is mostly cooked through, fold one half over the other. Cook 30–60 more seconds then slide onto your plate.</div></li>
+        </ol>
+      </div>
+      <div class="notes-box">
+        <div class="notes-title">Notes & tips</div>
+        <strong>Egg whites:</strong> Buy liquid egg whites in a carton (Egg Beaters or store brand) — much easier than separating eggs. &nbsp;|&nbsp; <strong>Calorie swap:</strong> At only 135 cal this gives you 185 extra calories of flexibility elsewhere in your day. &nbsp;|&nbsp; <strong>Non-stick pan is essential</strong> — egg whites stick badly to stainless steel.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LUNCH & DINNER -->
+<div class="category-section" id="cat-lunch-dinner">
+  <div class="category-header">
+    <span class="category-icon">🍽️</span>
+    <span class="category-title">Lunch & Dinner</span>
+    <span class="category-count" id="count-lunch-dinner">3 recipes</span>
+  </div>
+
+  <div class="recipe" id="recipe-3" data-tags="lunch dinner meal-prep high-protein low-cal">
+    <div class="recipe-header">
+      <div>
+        <div class="recipe-num">Recipe 03</div>
+        <h2>Turkey & Veggie Stir Fry</h2>
+        <p class="recipe-desc">High volume, high protein, high fiber — built for satiety on a low-calorie diet</p>
+        <div class="recipe-tags">
+          <span class="rtag rtag-lunch">Lunch</span>
+          <span class="rtag rtag-dinner">Dinner</span>
+          <span class="rtag rtag-meal-prep">Meal prep</span>
+          <span class="rtag rtag-high-protein">High protein</span>
+          <span class="rtag rtag-low-cal">Low calorie</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-val">272</span><span class="stat-label">Cal</span></div>
+        <div class="stat green"><span class="stat-val">28g</span><span class="stat-label">Protein</span></div>
+        <div class="stat blue"><span class="stat-val">10g</span><span class="stat-label">Fiber</span></div>
+        <div class="stat yellow"><span class="stat-val">5g</span><span class="stat-label">Fat</span></div>
+      </div>
+    </div>
+    <div class="recipe-body">
+      <div>
+        <div class="section-title">Ingredients — 6 portions</div>
+        <ul class="ingredient-list">
+          <li><span class="ing-name">Ground turkey breast 93/7</span><span class="ing-amount">1.5 lbs</span></li>
+          <li><span class="ing-name">Frozen cauliflower rice</span><span class="ing-amount">6 cups (2 bags)</span></li>
+          <li><span class="ing-name">Broccoli florets</span><span class="ing-amount">6 cups</span></li>
+          <li><span class="ing-name">Shredded cabbage</span><span class="ing-amount">6 cups</span></li>
+          <li><span class="ing-name">Canned black beans (drained)</span><span class="ing-amount">1½ cups</span></li>
+          <li><span class="ing-name">Low-sodium soy sauce</span><span class="ing-amount">12 tbsp</span></li>
+          <li><span class="ing-name">Rice wine vinegar</span><span class="ing-amount">1 tbsp</span></li>
+          <li><span class="ing-name">Garlic powder</span><span class="ing-amount">1 tsp</span></li>
+          <li><span class="ing-name">Cooking spray</span><span class="ing-amount">as needed</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title">Instructions</div>
+        <ol class="steps-list">
+          <li><div class="step-num">1</div><div>Spray pan over medium-high heat. Add turkey and cook until no longer pink, breaking apart. Season with garlic powder. Cook in batches — don't overcrowd.</div></li>
+          <li><div class="step-num">2</div><div>Add broccoli and cabbage. Stir fry on high heat 4–5 minutes until softened but still with a little crunch. Undercook slightly for meal prep.</div></li>
+          <li><div class="step-num">3</div><div>Add black beans, soy sauce, and rice wine vinegar. Toss and cook 2 minutes until sauce coats everything.</div></li>
+          <li><div class="step-num">4</div><div>Add cauliflower rice and fold everything together. Cook 2–3 minutes until heated through and sauce is absorbed.</div></li>
+        </ol>
+      </div>
+      <div class="notes-box">
+        <div class="notes-title">Notes & tips</div>
+        <strong>Cauliflower rice:</strong> Add at the end — goes mushy if overcooked. &nbsp;|&nbsp; <strong>Soy sauce:</strong> Taste as you go. &nbsp;|&nbsp; <strong>Optional finish:</strong> 3–4 drops sesame oil right before serving. &nbsp;|&nbsp; <strong>Shelf life:</strong> 4–5 days in airtight containers.
+      </div>
+    </div>
+  </div>
+
+  <div class="recipe" id="recipe-4" data-tags="lunch dinner meal-prep high-protein low-cal">
+    <div class="recipe-header">
+      <div>
+        <div class="recipe-num">Recipe 04</div>
+        <h2>Loaded Turkey Chili</h2>
+        <p class="recipe-desc">High protein, high fiber, meal-prep friendly — big bowl under 300 calories</p>
+        <div class="recipe-tags">
+          <span class="rtag rtag-lunch">Lunch</span>
+          <span class="rtag rtag-dinner">Dinner</span>
+          <span class="rtag rtag-meal-prep">Meal prep</span>
+          <span class="rtag rtag-high-protein">High protein</span>
+          <span class="rtag rtag-low-cal">Low calorie</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-val">285</span><span class="stat-label">Cal</span></div>
+        <div class="stat green"><span class="stat-val">28g</span><span class="stat-label">Protein</span></div>
+        <div class="stat blue"><span class="stat-val">10g</span><span class="stat-label">Fiber</span></div>
+        <div class="stat yellow"><span class="stat-val">6g</span><span class="stat-label">Fat</span></div>
+      </div>
+    </div>
+    <div class="recipe-body">
+      <div>
+        <div class="section-title">Ingredients — 6 portions</div>
+        <ul class="ingredient-list">
+          <li><span class="ing-name">Ground turkey 93/7</span><span class="ing-amount">1.5 lbs</span></li>
+          <li><span class="ing-name">Canned black beans (drained)</span><span class="ing-amount">1 cup</span></li>
+          <li><span class="ing-name">Canned kidney beans (drained)</span><span class="ing-amount">1 cup</span></li>
+          <li><span class="ing-name">Canned diced tomatoes (no salt)</span><span class="ing-amount">28 oz</span></li>
+          <li><span class="ing-name">Tomato paste</span><span class="ing-amount">2 tbsp</span></li>
+          <li><span class="ing-name">Low sodium chicken broth</span><span class="ing-amount">1 cup</span></li>
+          <li><span class="ing-name">Bell peppers diced</span><span class="ing-amount">2 peppers</span></li>
+          <li><span class="ing-name">Yellow onion diced</span><span class="ing-amount">1 onion</span></li>
+          <li><span class="ing-name">Zucchini diced</span><span class="ing-amount">1 zucchini</span></li>
+          <li><span class="ing-name">Celery stalks diced</span><span class="ing-amount">3 stalks</span></li>
+          <li><span class="ing-name">Garlic cloves minced</span><span class="ing-amount">4 cloves</span></li>
+          <li><span class="ing-name">Chili powder</span><span class="ing-amount">2 tbsp</span></li>
+          <li><span class="ing-name">Cumin</span><span class="ing-amount">1 tbsp</span></li>
+          <li><span class="ing-name">Smoked paprika</span><span class="ing-amount">1 tsp</span></li>
+          <li><span class="ing-name">Cayenne pepper</span><span class="ing-amount">½ tsp</span></li>
+          <li><span class="ing-name">Cooking spray</span><span class="ing-amount">as needed</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title">Instructions</div>
+        <ol class="steps-list">
+          <li><div class="step-num">1</div><div>Spray a large pot over medium-high heat. Add turkey and cook until no longer pink, breaking apart. About 6–7 minutes. Drain excess liquid.</div></li>
+          <li><div class="step-num">2</div><div>Add onion and garlic. Cook 3–4 minutes until onion softens. Add bell peppers, zucchini, and celery and cook another 3 minutes.</div></li>
+          <li><div class="step-num">3</div><div>Add all spices directly to the mixture. Stir well and cook 1 minute to bloom the spices — this makes a huge difference in flavor.</div></li>
+          <li><div class="step-num">4</div><div>Pour in diced tomatoes, tomato paste, chicken broth, and both beans. Stir and bring to a boil.</div></li>
+          <li><div class="step-num">5</div><div>Reduce heat to low, cover partially, and simmer 25–30 minutes stirring occasionally until thickened.</div></li>
+          <li><div class="step-num">6</div><div>Taste and adjust — more heat? Add cayenne. Too thick? Add a splash more broth.</div></li>
+        </ol>
+      </div>
+      <div class="notes-box">
+        <div class="notes-title">Notes & tips</div>
+        <strong>Flavor tip:</strong> Tastes even better on days 2 and 3 as flavors develop. &nbsp;|&nbsp; <strong>Topping:</strong> Use nonfat Greek yogurt instead of sour cream — saves ~50 cal and adds protein. &nbsp;|&nbsp; <strong>Shelf life:</strong> 5 days in the fridge, or freeze portions for up to 3 months.
+      </div>
+    </div>
+  </div>
+
+  <div class="recipe" id="recipe-5" data-tags="lunch dinner quick high-protein">
+    <div class="recipe-header">
+      <div>
+        <div class="recipe-num">Recipe 05</div>
+        <h2>BBQ Chicken Pizza</h2>
+        <p class="recipe-desc">High protein, low fat — layered tortilla pizza that comes together in under 15 minutes</p>
+        <div class="recipe-tags">
+          <span class="rtag rtag-lunch">Lunch</span>
+          <span class="rtag rtag-dinner">Dinner</span>
+          <span class="rtag rtag-quick">Quick make</span>
+          <span class="rtag rtag-high-protein">High protein</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-val">627</span><span class="stat-label">Cal</span></div>
+        <div class="stat green"><span class="stat-val">100g</span><span class="stat-label">Protein</span></div>
+        <div class="stat blue"><span class="stat-val">8g</span><span class="stat-label">Fiber</span></div>
+        <div class="stat yellow"><span class="stat-val">9g</span><span class="stat-label">Fat</span></div>
+      </div>
+    </div>
+    <div class="recipe-body">
+      <div>
+        <div class="section-title">Ingredients — 1 serving</div>
+        <ul class="ingredient-list">
+          <li><span class="ing-name">Ole Xtreme Wellness high fiber tortillas</span><span class="ing-amount">2 tortillas</span></li>
+          <li><span class="ing-name">BBQ sauce (G Hughes or homemade Recipe 06)</span><span class="ing-amount">5 tbsp split evenly</span></li>
+          <li><span class="ing-name">Great Value chunk chicken breast (canned, drained)</span><span class="ing-amount">4 servings split evenly</span></li>
+          <li><span class="ing-name">Heb fat free natural mozzarella cheese</span><span class="ing-amount">4 oz split evenly</span></li>
+          <li><span class="ing-name">Red pepper flakes (topper)</span><span class="ing-amount">to taste</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title">Instructions</div>
+        <ol class="steps-list">
+          <li><div class="step-num">1</div><div>Preheat oven to 425°F. Place first tortilla flat on a baking sheet or oven-safe pan.</div></li>
+          <li><div class="step-num">2</div><div>Spread half the BBQ sauce evenly over the first tortilla. Top with half the chicken and half the cheese.</div></li>
+          <li><div class="step-num">3</div><div>Layer the second tortilla on top. Spread remaining BBQ sauce, chicken, and cheese on top.</div></li>
+          <li><div class="step-num">4</div><div>Bake at 425°F for 7 minutes until cheese is melted and tortilla edges are crispy. Let sit 1–2 minutes, top with red pepper flakes, then slice.</div></li>
+        </ol>
+      </div>
+      <div class="notes-box">
+        <div class="notes-title">Notes & tips</div>
+        <strong>Half serving:</strong> Split into 2 meals at ~314 cal each — reheat the second half in the oven or air fryer at 375°F for 3–4 min to keep it crispy. &nbsp;|&nbsp; <strong>Crispier base:</strong> Place directly on the oven rack instead of a baking sheet. &nbsp;|&nbsp; <strong>BBQ sauce:</strong> Use Recipe 06 for a less sweet, tangier, spicier version.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SAUCES -->
+<div class="category-section" id="cat-sauces">
+  <div class="category-header">
+    <span class="category-icon">🫙</span>
+    <span class="category-title">Sauces</span>
+    <span class="category-count" id="count-sauces">1 recipe</span>
+  </div>
+
+  <div class="recipe" id="recipe-6" data-tags="sauce quick meal-prep low-cal">
+    <div class="recipe-header">
+      <div>
+        <div class="recipe-num">Recipe 06</div>
+        <h2>Homemade Tangy & Spicy BBQ Sauce</h2>
+        <p class="recipe-desc">Vinegar-forward, smoky, and spicy — zero sugar, ~8 calories per tablespoon</p>
+        <div class="recipe-tags">
+          <span class="rtag rtag-sauce">Sauce</span>
+          <span class="rtag rtag-quick">Quick make</span>
+          <span class="rtag rtag-meal-prep">Meal prep</span>
+          <span class="rtag rtag-low-cal">Low calorie</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-val">~8</span><span class="stat-label">Cal/tbsp</span></div>
+        <div class="stat green"><span class="stat-val">0g</span><span class="stat-label">Sugar</span></div>
+        <div class="stat blue"><span class="stat-val">~15</span><span class="stat-label">Servings</span></div>
+        <div class="stat yellow"><span class="stat-val">$1.25</span><span class="stat-label">Per batch</span></div>
+      </div>
+    </div>
+    <div class="recipe-body">
+      <div>
+        <div class="section-title">Ingredients — 1 batch (~15 tbsp)</div>
+        <ul class="ingredient-list">
+          <li><span class="ing-name">Tomato paste (small can)</span><span class="ing-amount">6 oz</span></li>
+          <li><span class="ing-name">Apple cider vinegar</span><span class="ing-amount">⅓ cup</span></li>
+          <li><span class="ing-name">Water</span><span class="ing-amount">⅓ cup</span></li>
+          <li><span class="ing-name">Worcestershire sauce</span><span class="ing-amount">1 tbsp</span></li>
+          <li><span class="ing-name">Liquid smoke (hickory)</span><span class="ing-amount">1 tsp</span></li>
+          <li><span class="ing-name">Smoked paprika</span><span class="ing-amount">1 tsp</span></li>
+          <li><span class="ing-name">Garlic powder</span><span class="ing-amount">1 tsp</span></li>
+          <li><span class="ing-name">Cayenne pepper</span><span class="ing-amount">½ tsp</span></li>
+          <li><span class="ing-name">Red pepper flakes</span><span class="ing-amount">½ tsp</span></li>
+          <li><span class="ing-name">Onion powder</span><span class="ing-amount">½ tsp</span></li>
+          <li><span class="ing-name">Great Value monk fruit & erythritol sweetener</span><span class="ing-amount">1 tsp</span></li>
+          <li><span class="ing-name">Salt</span><span class="ing-amount">¼ tsp</span></li>
+          <li><span class="ing-name">Black pepper</span><span class="ing-amount">¼ tsp</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title">Instructions</div>
+        <ol class="steps-list">
+          <li><div class="step-num">1</div><div>Add all ingredients to a small saucepan and whisk together until smooth.</div></li>
+          <li><div class="step-num">2</div><div>Bring to medium heat until it just starts to bubble, then reduce to low. Simmer 8–10 minutes stirring occasionally until slightly thickened.</div></li>
+          <li><div class="step-num">3</div><div>Taste and adjust — more tang? Add a splash more apple cider vinegar. More heat? Add more cayenne. Too tangy? Add a tiny bit more monk fruit sweetener, a few drops at a time.</div></li>
+          <li><div class="step-num">4</div><div>Cool completely then transfer to a jar. Store in the fridge for up to 2 weeks.</div></li>
+        </ol>
+      </div>
+      <div class="notes-box">
+        <div class="notes-title">Notes & tips</div>
+        <strong>Cost:</strong> ~$1.25 per batch vs $3–4 for G Hughes or $10+ for specialty sugar free brands. Makes enough for 2–3 pizzas. &nbsp;|&nbsp; <strong>Sweetener:</strong> Use Great Value Monk Fruit & Erythritol (~$5 for 16oz at Walmart) — no bitter aftertaste unlike stevia. &nbsp;|&nbsp; <strong>Liquid smoke:</strong> Don't exceed 1 tsp — a little goes a very long way. &nbsp;|&nbsp; <strong>Tip:</strong> Flavor improves significantly after 24 hours in the fridge.
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>My Meal Prep Recipe Book &nbsp;·&nbsp; 1,200 cal/day plan &nbsp;·&nbsp; Built with Claude</footer>
+
+<script>
+  const allFtags = document.querySelectorAll('.ftag');
+  const allRecipes = document.querySelectorAll('.recipe');
+  const emptyState = document.getElementById('empty-state');
+
+  const catRecipes = {
+    'cat-breakfast': ['recipe-1','recipe-2'],
+    'cat-lunch-dinner': ['recipe-3','recipe-4','recipe-5'],
+    'cat-sauces': ['recipe-6']
+  };
+
+  function filterRecipes(tag) {
+    allFtags.forEach(t => t.classList.remove('active'));
+    document.querySelector('[data-tag="'+tag+'"]').classList.add('active');
+
+    let visible = 0;
+    allRecipes.forEach(r => {
+      const tags = (r.dataset.tags || '').split(' ');
+      const show = tag === 'all' || tags.includes(tag);
+      r.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+
+    Object.entries(catRecipes).forEach(([catId, ids]) => {
+      const section = document.getElementById(catId);
+      const visibleInCat = ids.filter(id => !document.getElementById(id).classList.contains('hidden')).length;
+      section.classList.toggle('all-hidden', visibleInCat === 0);
+      const countEl = document.getElementById('count-' + catId.replace('cat-',''));
+      if (countEl) countEl.textContent = visibleInCat > 0 ? visibleInCat + (visibleInCat === 1 ? ' recipe' : ' recipes') : '';
+    });
+
+    emptyState.classList.toggle('visible', visible === 0);
+  }
+</script>
+</body>
+</html>

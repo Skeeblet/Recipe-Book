@@ -1,0 +1,104 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'C:\\Program Files\\nodejs\\node.exe',
+1 verbose cli   'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'install' ]
+2 info using npm@3.10.10
+3 info using node@v6.10.2
+4 silly loadCurrentTree Starting
+5 silly install loadCurrentTree
+6 silly install readLocalPackageData
+7 silly install normalizeTree
+8 silly loadCurrentTree Finishing
+9 silly loadIdealTree Starting
+10 silly install loadIdealTree
+11 silly cloneCurrentTree Starting
+12 silly install cloneCurrentTreeToIdealTree
+13 silly cloneCurrentTree Finishing
+14 silly loadShrinkwrap Starting
+15 silly install loadShrinkwrap
+16 silly loadShrinkwrap Finishing
+17 silly loadAllDepsIntoIdealTree Starting
+18 silly install loadAllDepsIntoIdealTree
+19 silly fetchNamedPackageData react
+20 silly mapToRegistry name react
+21 silly mapToRegistry using default registry
+22 silly mapToRegistry registry https://registry.npmjs.org/
+23 silly mapToRegistry data Result {
+23 silly mapToRegistry   raw: 'react',
+23 silly mapToRegistry   scope: null,
+23 silly mapToRegistry   escapedName: 'react',
+23 silly mapToRegistry   name: 'react',
+23 silly mapToRegistry   rawSpec: '',
+23 silly mapToRegistry   spec: 'latest',
+23 silly mapToRegistry   type: 'tag' }
+24 silly mapToRegistry uri https://registry.npmjs.org/react
+25 silly fetchNamedPackageData react-dom
+26 silly mapToRegistry name react-dom
+27 silly mapToRegistry using default registry
+28 silly mapToRegistry registry https://registry.npmjs.org/
+29 silly mapToRegistry data Result {
+29 silly mapToRegistry   raw: 'react-dom',
+29 silly mapToRegistry   scope: null,
+29 silly mapToRegistry   escapedName: 'react-dom',
+29 silly mapToRegistry   name: 'react-dom',
+29 silly mapToRegistry   rawSpec: '',
+29 silly mapToRegistry   spec: 'latest',
+29 silly mapToRegistry   type: 'tag' }
+30 silly mapToRegistry uri https://registry.npmjs.org/react-dom
+31 verbose request uri https://registry.npmjs.org/react
+32 verbose request no auth needed
+33 info attempt registry request try #1 at 12:05:39 PM
+34 verbose request id 5f89089a1357ad17
+35 http request GET https://registry.npmjs.org/react
+36 verbose request uri https://registry.npmjs.org/react-dom
+37 verbose request no auth needed
+38 info attempt registry request try #1 at 12:05:39 PM
+39 http request GET https://registry.npmjs.org/react-dom
+40 info retry will retry, error on last attempt: Error: write EPROTO 101057795:error:1408D07B:SSL routines:ssl3_get_key_exchange:bad signature:openssl\ssl\s3_clnt.c:2032:
+41 info retry will retry, error on last attempt: Error: write EPROTO 101057795:error:1408D07B:SSL routines:ssl3_get_key_exchange:bad signature:openssl\ssl\s3_clnt.c:2032:
+42 info attempt registry request try #2 at 12:05:49 PM
+43 http request GET https://registry.npmjs.org/react
+44 info attempt registry request try #2 at 12:05:49 PM
+45 http request GET https://registry.npmjs.org/react-dom
+46 info retry will retry, error on last attempt: Error: write EPROTO 101057795:error:1408D07B:SSL routines:ssl3_get_key_exchange:bad signature:openssl\ssl\s3_clnt.c:2032:
+47 info retry will retry, error on last attempt: Error: write EPROTO 101057795:error:1408D07B:SSL routines:ssl3_get_key_exchange:bad signature:openssl\ssl\s3_clnt.c:2032:
+48 info attempt registry request try #3 at 12:06:49 PM
+49 http request GET https://registry.npmjs.org/react
+50 info attempt registry request try #3 at 12:06:49 PM
+51 http request GET https://registry.npmjs.org/react-dom
+52 silly fetchPackageMetaData Error: write EPROTO 101057795:error:1408D07B:SSL routines:ssl3_get_key_exchange:bad signature:openssl\ssl\s3_clnt.c:2032:
+52 silly fetchPackageMetaData
+52 silly fetchPackageMetaData     at exports._errnoException (util.js:1018:11)
+52 silly fetchPackageMetaData     at WriteWrap.afterWrite (net.js:804:14)
+52 silly fetchPackageMetaData  error for react-dom@^18.2.0 { Error: write EPROTO 101057795:error:1408D07B:SSL routines:ssl3_get_key_exchange:bad signature:openssl\ssl\s3_clnt.c:2032:
+52 silly fetchPackageMetaData
+52 silly fetchPackageMetaData     at exports._errnoException (util.js:1018:11)
+52 silly fetchPackageMetaData     at WriteWrap.afterWrite (net.js:804:14) code: 'EPROTO', errno: 'EPROTO', syscall: 'write' }
+53 silly fetchPackageMetaData Error: write EPROTO 101057795:error:1408D07B:SSL routines:ssl3_get_key_exchange:bad signature:openssl\ssl\s3_clnt.c:2032:
+53 silly fetchPackageMetaData
+53 silly fetchPackageMetaData     at exports._errnoException (util.js:1018:11)
+53 silly fetchPackageMetaData     at WriteWrap.afterWrite (net.js:804:14)
+53 silly fetchPackageMetaData  error for react@^18.2.0 { Error: write EPROTO 101057795:error:1408D07B:SSL routines:ssl3_get_key_exchange:bad signature:openssl\ssl\s3_clnt.c:2032:
+53 silly fetchPackageMetaData
+53 silly fetchPackageMetaData     at exports._errnoException (util.js:1018:11)
+53 silly fetchPackageMetaData     at WriteWrap.afterWrite (net.js:804:14) code: 'EPROTO', errno: 'EPROTO', syscall: 'write' }
+54 silly rollbackFailedOptional Starting
+55 silly rollbackFailedOptional Finishing
+56 silly runTopLevelLifecycles Finishing
+57 silly install printInstalled
+58 verbose stack Error: write EPROTO 101057795:error:1408D07B:SSL routines:ssl3_get_key_exchange:bad signature:openssl\ssl\s3_clnt.c:2032:
+58 verbose stack
+58 verbose stack     at exports._errnoException (util.js:1018:11)
+58 verbose stack     at WriteWrap.afterWrite (net.js:804:14)
+59 verbose cwd E:\repos\RecipeApp
+60 error Windows_NT 10.0.20348
+61 error argv "C:\\Program Files\\nodejs\\node.exe" "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "install"
+62 error node v6.10.2
+63 error npm  v3.10.10
+64 error code EPROTO
+65 error errno EPROTO
+66 error syscall write
+67 error write EPROTO 101057795:error:1408D07B:SSL routines:ssl3_get_key_exchange:bad signature:openssl\ssl\s3_clnt.c:2032:
+68 error If you need help, you may report this error at:
+68 error     <https://github.com/npm/npm/issues>
+69 verbose exit [ 1, true ]
