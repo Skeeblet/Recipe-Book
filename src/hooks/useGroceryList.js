@@ -80,5 +80,10 @@ export function useGroceryList() {
     mutate(prev => prev.filter(i => !i.checked))
   }
 
-  return { items, addIngredients, addItem, updateItem, toggleItem, removeItem, clearChecked }
+  function replaceAll(cloudItems) {
+    save(cloudItems)
+    setItems(cloudItems)
+  }
+
+  return { items, addIngredients, addItem, updateItem, toggleItem, removeItem, clearChecked, replaceAll }
 }

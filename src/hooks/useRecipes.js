@@ -59,5 +59,11 @@ export function useRecipes() {
     })
   }
 
-  return { recipes, addRecipe, updateRecipe, deleteRecipe }
+  function replaceAll(cloudRecipes) {
+    const userOnly = cloudRecipes.filter(r => r.isUserAdded)
+    saveUserRecipes(userOnly)
+    setUserRecipes(userOnly)
+  }
+
+  return { recipes, addRecipe, updateRecipe, deleteRecipe, replaceAll }
 }

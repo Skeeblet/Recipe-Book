@@ -23,5 +23,11 @@ export function useSettings() {
     })
   }
 
-  return { settings, set }
+  function replaceAll(cloudSettings) {
+    const merged = { ...DEFAULTS, ...cloudSettings }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
+    setSettings(merged)
+  }
+
+  return { settings, set, replaceAll }
 }

@@ -81,5 +81,10 @@ export function useTags() {
     })
   }
 
-  return { allTags, customTags, addTag, editTag, deleteTag }
+  function replaceAll(cloudTags) {
+    saveCustomTags(cloudTags)
+    setCustomTags(cloudTags)
+  }
+
+  return { allTags, customTags, addTag, editTag, deleteTag, replaceAll }
 }

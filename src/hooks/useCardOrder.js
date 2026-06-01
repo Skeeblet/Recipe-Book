@@ -54,5 +54,10 @@ export function useCardOrder() {
     })
   }
 
-  return { order, reorder, appendNew, removeId, initOrderExact }
+  function replaceAll(cloudOrder) {
+    persist(cloudOrder)
+    setOrder(cloudOrder)
+  }
+
+  return { order, reorder, appendNew, removeId, initOrderExact, replaceAll }
 }

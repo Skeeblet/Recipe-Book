@@ -343,3 +343,20 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
   .filter-bar { padding: 14px 16px; }
   .cover { padding: 40px 16px; }
 }
+
+/* Auth */
+.filter-bar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.auth-user { display: flex; align-items: center; gap: 8px; }
+.auth-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--border); }
+.auth-btn { padding: 6px 14px; border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; background: var(--accent); color: white; border: none; }
+.auth-btn:hover { opacity: 0.88; }
+.auth-btn--out { background: transparent; color: var(--text-muted); border: 1.5px solid var(--border); }
+.auth-btn--out:hover { opacity: 1; border-color: var(--brown-light); color: var(--text-body); }
+
+/* Conflict modal */
+.conflict-modal { max-width: 480px; }
+.conflict-recipe-name { font-size: 18px; font-weight: 600; color: var(--text-body); margin-bottom: 6px; }
+.conflict-recipe-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 6px; }
+.conflict-recipe-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+.conflict-hint { font-size: 13px; color: var(--text-muted); font-style: italic; }
+.conflict-actions { display: flex; gap: 12px; }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Cover from './components/Cover.jsx'
 import FilterBar from './components/FilterBar.jsx'
 import RecipeCard from './components/RecipeCard.jsx'
@@ -7,11 +7,24 @@ import RecipeForm from './components/RecipeForm.jsx'
 import GroceryList from './components/GroceryList.jsx'
 import ImportRecipeModal from './components/ImportRecipeModal.jsx'
 import Settings from './components/Settings.jsx'
+import AuthButton from './components/AuthButton.jsx'
+import ConflictModal from './components/ConflictModal.jsx'
 import { useRecipes } from './hooks/useRecipes.js'
 import { useTags } from './hooks/useTags.js'
 import { useGroceryList } from './hooks/useGroceryList.js'
 import { useSettings } from './hooks/useSettings.js'
 import { useCardOrder } from './hooks/useCardOrder.js'
+import { useAuth } from './hooks/useAuth.js'
+import { useFirestoreSync } from './hooks/useFirestoreSync.js'
+import { db } from './firebase/config.js'
+import {
+  pullAllUserData,
+  seedFirestore,
+  writeRecipe,
+  deleteRecipeDoc,
+  deleteGroceryItemDoc,
+  deleteTagDoc,
+} from './firebase/firestoreAdapter.js'
 
 function parseStatValue(recipe, labelKeyword) {
   const stat = recipe.stats.find(s => s.label.toLowerCase().includes(labelKeyword))
@@ -55,11 +68,53 @@ function sortRecipes(recipes, sortBy, customOrder = []) {
 }
 
 export default function App() {
-  const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes()
-  const { allTags, customTags, addTag, editTag, deleteTag } = useTags()
-  const { items: groceryItems, addIngredients, addItem, updateItem, toggleItem, removeItem, clearChecked } = useGroceryList()
-  const { settings, set: setSetting } = useSettings()
-  const { order: cardOrder, reorder, appendNew, removeId, initOrderExact } = useCardOrder()
+  const { user, authLoading, signIn, signOut } = useAuth()
+  const { recipes, addRecipe, updateRecipe, deleteRecipe, replaceAll: replaceRecipes } = useRecipes()
+  const { allTags, customTags, addTag, editTag, deleteTag, replaceAll: replaceTags } = useTags()
+  const { items: groceryItems, addIngredients, addItem, updateItem, toggleItem, removeItem, clearChecked, replaceAll: replaceGrocery } = useGroceryList()
+  const { settings, set: setSetting, replaceAll: replaceSettings } = useSettings()
+  const { order: cardOrder, reorder, appendNew, removeId, initOrderExact, replaceAll: replaceCardOrder } = useCardOrder()
+  const [conflicts, setConflicts] = useState([])
+
+  useFirestoreSync(user?.uid ?? null, { recipes, groceryItems, customTags, settings, cardOrder })
+
+  // Sign-in merge: seed on first sign-in, or merge cloud data with local
+  useEffect(() => {
+    if (authLoading || !user) return
+    pullAllUserData(db, user.uid).then(data => {
+      const hasCloudData = data.recipes?.length || data.groceryList?.length || data.tags?.length
+
+      if (!hasCloudData) {
+        seedFirestore(db, user.uid, {
+          recipes: recipes.filter(r => r.isUserAdded),
+          groceryList: groceryItems,
+          tags: customTags,
+          settings,
+          cardOrder,
+        }).catch(console.error)
+        return
+      }
+
+      const cloudIds = new Set((data.recipes || []).map(r => r.id))
+      const localOnly = recipes.filter(r => r.isUserAdded && !cloudIds.has(r.id))
+
+      replaceRecipes([
+        ...recipes.filter(r => !r.isUserAdded),
+        ...(data.recipes || []),
+      ])
+
+      if (data.groceryList?.length) {
+        const localIds = new Set(groceryItems.map(i => String(i.id)))
+        const cloudOnly = data.groceryList.filter(i => !localIds.has(String(i.id)))
+        if (cloudOnly.length) replaceGrocery([...groceryItems, ...cloudOnly])
+      }
+
+      if (data.tags?.length) replaceTags(data.tags)
+      if (data.settings) replaceSettings(data.settings)
+      if (data.cardOrder) replaceCardOrder(data.cardOrder)
+      if (localOnly.length) setConflicts(localOnly)
+    }).catch(console.error)
+  }, [user?.uid, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [activeTag, setActiveTag] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -117,10 +172,32 @@ export default function App() {
     setImportOpen(false)
   }
 
+  function handleConflictResolve(recipe, action) {
+    if (action === 'keep') {
+      writeRecipe(db, user.uid, recipe).catch(console.error)
+    } else {
+      deleteRecipe(recipe.id)
+      removeId(recipe.id)
+    }
+    setConflicts(prev => prev.filter(r => r.id !== recipe.id))
+  }
+
   function handleDelete(id) {
     deleteRecipe(id)
     removeId(id)
     if (selectedRecipe?.id === id) setSelectedRecipe(null)
+    if (user) deleteRecipeDoc(db, user.uid, id).catch(console.error)
+  }
+
+  function handleRemoveGroceryItem(id) {
+    removeItem(id)
+    if (user) deleteGroceryItemDoc(db, user.uid, id).catch(console.error)
+  }
+
+  function handleClearChecked() {
+    const idsToDelete = groceryItems.filter(i => i.checked).map(i => i.id)
+    clearChecked()
+    if (user) idsToDelete.forEach(id => deleteGroceryItemDoc(db, user.uid, id).catch(console.error))
   }
 
   // Drag handlers
@@ -165,6 +242,10 @@ export default function App() {
         groceryCount={uncheckedGroceryCount}
         onOpenGrocery={() => setGroceryOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
+        authUser={user}
+        authLoading={authLoading}
+        onSignIn={signIn}
+        onSignOut={signOut}
       />
       <div className="recipes-container">
         {filteredRecipes.length === 0
@@ -214,13 +295,13 @@ export default function App() {
           onSettingChange={setSetting}
           onEditTag={editTag}
           onDeleteTag={(slug) => {
-            // Remove tag from all recipes that use it
             recipes.forEach(r => {
               if (r.tags.includes(slug)) {
                 updateRecipe(r.id, { ...r, tags: r.tags.filter(t => t !== slug) })
               }
             })
             deleteTag(slug)
+            if (user) deleteTagDoc(db, user.uid, slug).catch(console.error)
           }}
           onEditRecipe={(recipe) => setFormState({ open: true, recipe })}
           onDeleteRecipe={(id) => handleDelete(id)}
@@ -232,9 +313,9 @@ export default function App() {
         <GroceryList
           items={groceryItems}
           onToggle={toggleItem}
-          onRemove={removeItem}
+          onRemove={handleRemoveGroceryItem}
           onUpdate={updateItem}
-          onClearChecked={clearChecked}
+          onClearChecked={handleClearChecked}
           onClose={() => setGroceryOpen(false)}
         />
       )}
@@ -256,6 +337,10 @@ export default function App() {
           onImport={handleImport}
           onClose={() => setImportOpen(false)}
         />
+      )}
+
+      {conflicts.length > 0 && (
+        <ConflictModal conflicts={conflicts} onResolve={handleConflictResolve} />
       )}
     </>
   )

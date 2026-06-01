@@ -1,3 +1,5 @@
+import AuthButton from './AuthButton.jsx'
+
 const SORT_OPTIONS = [
   { value: 'alpha',        label: 'A → Z' },
   { value: 'cal-asc',      label: 'Calories: low → high' },
@@ -16,6 +18,7 @@ export default function FilterBar({
   onAddRecipe, onImportRecipe,
   groceryCount, onOpenGrocery,
   onOpenSettings,
+  authUser, authLoading, onSignIn, onSignOut,
 }) {
   return (
     <div className="filter-bar">
@@ -51,6 +54,7 @@ export default function FilterBar({
           </div>
         </div>
         <div className="filter-bar-actions">
+          <AuthButton user={authUser} authLoading={authLoading} onSignIn={onSignIn} onSignOut={onSignOut} />
           <button className="grocery-btn" onClick={onOpenGrocery}>
             Grocery list{groceryCount > 0 ? ` (${groceryCount})` : ''}
           </button>
