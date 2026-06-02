@@ -353,6 +353,21 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 .auth-btn--out { background: transparent; color: var(--text-muted); border: 1.5px solid var(--border); }
 .auth-btn--out:hover { opacity: 1; border-color: var(--brown-light); color: var(--text-body); }
 
+/* Update toast */
+.update-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--brown-dark); color: var(--cream);
+  padding: 12px 24px; border-radius: 24px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(44,31,20,0.25);
+  z-index: 9999; white-space: nowrap;
+  animation: toast-in 0.2s ease;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 /* Conflict modal */
 .conflict-modal { max-width: 480px; }
 .conflict-recipe-name { font-size: 18px; font-weight: 600; color: var(--text-body); margin-bottom: 6px; }

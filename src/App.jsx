@@ -9,6 +9,8 @@ import ImportRecipeModal from './components/ImportRecipeModal.jsx'
 import Settings from './components/Settings.jsx'
 import AuthButton from './components/AuthButton.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
+import UpdateToast from './components/UpdateToast.jsx'
+import { usePWAUpdate } from './hooks/usePWAUpdate.js'
 import { useRecipes } from './hooks/useRecipes.js'
 import { useTags } from './hooks/useTags.js'
 import { useGroceryList } from './hooks/useGroceryList.js'
@@ -69,6 +71,7 @@ function sortRecipes(recipes, sortBy, customOrder = []) {
 
 export default function App() {
   const { user, authLoading, signIn, signOut } = useAuth()
+  const { updateAvailable, applyUpdate } = usePWAUpdate()
   const { recipes, addRecipe, updateRecipe, deleteRecipe, replaceAll: replaceRecipes } = useRecipes()
   const { allTags, customTags, addTag, editTag, deleteTag, replaceAll: replaceTags } = useTags()
   const { items: groceryItems, addIngredients, addItem, updateItem, toggleItem, removeItem, clearChecked, replaceAll: replaceGrocery } = useGroceryList()
@@ -342,6 +345,8 @@ export default function App() {
       {conflicts.length > 0 && (
         <ConflictModal conflicts={conflicts} onResolve={handleConflictResolve} />
       )}
+
+      <UpdateToast visible={updateAvailable} onApply={applyUpdate} />
     </>
   )
 }
