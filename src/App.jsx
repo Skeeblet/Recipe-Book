@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Cover from './components/Cover.jsx'
 import FilterBar from './components/FilterBar.jsx'
 import RecipeCard from './components/RecipeCard.jsx'
@@ -123,6 +123,16 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('alpha')
   const [selectedRecipe, setSelectedRecipe] = useState(null)
+
+  // Push a history entry when detail opens so the browser back button closes it
+  useEffect(() => {
+    if (!selectedRecipe) return
+    window.history.pushState({ recipeDetail: true }, '')
+    function onPopState() { setSelectedRecipe(null) }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [!!selectedRecipe]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const [printRecipeId, setPrintRecipeId] = useState(null)
   const [formState, setFormState] = useState({ open: false, recipe: null })
   const [groceryOpen, setGroceryOpen] = useState(false)
@@ -188,7 +198,7 @@ export default function App() {
   function handleDelete(id) {
     deleteRecipe(id)
     removeId(id)
-    if (selectedRecipe?.id === id) setSelectedRecipe(null)
+    if (selectedRecipe?.id === id) window.history.back()  // popstate listener closes detail
     if (user) deleteRecipeDoc(db, user.uid, id).catch(console.error)
   }
 
@@ -280,7 +290,7 @@ export default function App() {
           allTags={allTags}
           isPrinting={printRecipeId === selectedRecipe.id}
           smartUnits={settings.smartUnits}
-          onBack={() => setSelectedRecipe(null)}
+          onBack={() => window.history.back()}
           onPrint={() => handlePrint(selectedRecipe.id)}
           onEdit={() => setFormState({ open: true, recipe: selectedRecipe })}
           onDelete={() => handleDelete(selectedRecipe.id)}
