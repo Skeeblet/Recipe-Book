@@ -84,8 +84,9 @@ export default function FilterBar({
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [mobileTagsOpen,   setMobileTagsOpen]   = useState(false)
   const [mobileSortOpen,   setMobileSortOpen]   = useState(false)
-  const filterBarRef = useRef(null)
-  const lastScrollY  = useRef(0)
+  const filterBarRef  = useRef(null)
+  const lastScrollY   = useRef(0)
+  const searchInputRef = useRef(null)
 
   // Scroll-direction hide/show — passive listener, mutates DOM class directly
   useEffect(() => {
@@ -112,6 +113,11 @@ export default function FilterBar({
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [])
+
+  // Focus the search input only when the user explicitly opens it
+  useEffect(() => {
+    if (mobileSearchOpen) searchInputRef.current?.focus()
+  }, [mobileSearchOpen])
 
   function handleTagChange(tag) { onTagChange(tag); setMobileTagsOpen(false) }
   function handleSortChange(val) { onSortChange(val); setMobileSortOpen(false) }
@@ -158,7 +164,7 @@ export default function FilterBar({
             <BackIcon />
           </button>
           <input
-            autoFocus
+            ref={searchInputRef}
             type="text"
             className="search-input"
             placeholder="Search recipes, ingredients..."
