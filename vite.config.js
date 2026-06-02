@@ -16,6 +16,7 @@ export default defineConfig({
         navigateFallbackDenylist: [/\/api\//],
       },
       manifest: {
+        id: '/Recipe-Book/',
         name: 'My Recipe Book',
         short_name: 'Recipes',
         start_url: '/Recipe-Book/',
@@ -24,7 +25,8 @@ export default defineConfig({
         theme_color: '#D4622A',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
     }),
