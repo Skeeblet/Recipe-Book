@@ -245,24 +245,26 @@ export default function App() {
   return (
     <>
       <Cover totalRecipes={recipes.length} />
-      <FilterBar
-        allTags={allTags}
-        activeTag={activeTag}
-        onTagChange={setActiveTag}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        onAddRecipe={() => setFormState({ open: true, recipe: null })}
-        onImportRecipe={() => setImportOpen(true)}
-        groceryCount={uncheckedGroceryCount}
-        onOpenGrocery={() => setGroceryOpen(true)}
-        onOpenSettings={() => setSettingsOpen(true)}
-        authUser={user}
-        authLoading={authLoading}
-        onSignIn={signIn}
-        onSignOut={signOut}
-      />
+      {mobileTab === 'recipes' && (
+        <FilterBar
+          allTags={allTags}
+          activeTag={activeTag}
+          onTagChange={setActiveTag}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          onAddRecipe={() => setFormState({ open: true, recipe: null })}
+          onImportRecipe={() => setImportOpen(true)}
+          groceryCount={uncheckedGroceryCount}
+          onOpenGrocery={() => setGroceryOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+          authUser={user}
+          authLoading={authLoading}
+          onSignIn={signIn}
+          onSignOut={signOut}
+        />
+      )}
       <div className={`recipes-container${mobileTab !== 'recipes' ? ' hide-mobile' : ''}`}>
         {filteredRecipes.length === 0
           ? <div className="empty-state visible">No recipes match that filter.</div>
