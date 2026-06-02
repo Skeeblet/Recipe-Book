@@ -3,6 +3,7 @@
   --cream: #FAF7F2; --warm-white: #FFFEF9; --brown-dark: #2C1F14; --brown-mid: #6B4C35;
   --brown-light: #C4956A; --accent: #D4622A; --accent-light: #F2E4D8; --green: #4A6741;
   --green-light: #EAF0E8; --text-body: #3D2E22; --text-muted: #8C7060; --border: #E8DDD3;
+  --filter-bar-height: 57px;
 }
 html { scroll-behavior: smooth; }
 body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text-body); line-height: 1.6; }
@@ -375,3 +376,93 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 .conflict-recipe-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
 .conflict-hint { font-size: 13px; color: var(--text-muted); font-style: italic; }
 .conflict-actions { display: flex; gap: 12px; }
+
+/* ── Mobile: hide cover + footer ─────────────────────────────── */
+@media (max-width: 768px) {
+  .cover { display: none; }
+  footer { display: none; }
+}
+
+/* ── Mobile: hide auth button in FilterBar ───────────────────── */
+@media (max-width: 768px) {
+  .filter-bar-actions .auth-user,
+  .filter-bar-actions .auth-btn {
+    display: none;
+  }
+}
+
+/* ── Mobile: recipes container padding + hide-mobile helper ──── */
+@media (max-width: 768px) {
+  .recipes-container {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+  .hide-mobile { display: none !important; }
+}
+
+/* ── Bottom nav ──────────────────────────────────────────────── */
+.bottom-nav { display: none; }
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 64px;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--warm-white);
+    border-top: 1.5px solid var(--border);
+    z-index: 150;
+  }
+  .bottom-nav-tab {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); transition: color 0.15s;
+    padding: 0; font-family: 'DM Sans', sans-serif;
+  }
+  .bottom-nav-tab.active { color: var(--accent); }
+  .bottom-nav-icon { position: relative; display: flex; align-items: center; justify-content: center; }
+  .bottom-nav-icon svg { width: 22px; height: 22px; }
+  .bottom-nav-label { font-size: 10px; font-weight: 500; }
+  .bottom-nav-badge {
+    position: absolute; top: -4px; right: -8px;
+    background: var(--accent); color: white;
+    font-size: 9px; font-weight: 600; line-height: 1;
+    min-width: 14px; height: 14px;
+    border-radius: 7px; padding: 0 3px;
+    display: flex; align-items: center; justify-content: center;
+  }
+}
+
+/* ── Grocery full page (mobile tab) ──────────────────────────── */
+.grocery-page {
+  position: fixed; inset: 0;
+  padding-top: var(--filter-bar-height);
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  background: var(--warm-white);
+  display: flex; flex-direction: column;
+  z-index: 10;
+  overflow: hidden;
+}
+.grocery-page .grocery-items { flex: 1; overflow-y: auto; }
+
+/* ── Profile page ────────────────────────────────────────────── */
+.profile-page {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  flex: 1;
+  padding: 40px 24px;
+  gap: 8px;
+  text-align: center;
+}
+.profile-avatar-wrap { margin-bottom: 12px; }
+.profile-avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  object-fit: cover; border: 2px solid var(--border);
+  display: block;
+}
+.profile-avatar--placeholder { background: var(--border); }
+.profile-name { font-size: 18px; font-weight: 600; color: var(--text-body); }
+.profile-email { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
+.profile-hint { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
+.profile-auth-btn { margin-top: 8px; }

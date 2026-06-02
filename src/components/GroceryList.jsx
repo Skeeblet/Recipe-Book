@@ -1,14 +1,14 @@
 import { useState } from 'react'
 
-export default function GroceryList({ items, onToggle, onRemove, onUpdate, onClearChecked, onClose }) {
+export default function GroceryList({ items, onToggle, onRemove, onUpdate, onClearChecked, onClose, isFullPage }) {
   const unchecked = items.filter(i => !i.checked)
   const checked = items.filter(i => i.checked)
 
   return (
-    <div className="grocery-panel">
+    <div className={isFullPage ? 'grocery-page' : 'grocery-panel'}>
       <div className="grocery-header">
         <span className="grocery-title">Grocery List</span>
-        <button className="grocery-close" onClick={onClose}>✕</button>
+        {!isFullPage && <button className="grocery-close" onClick={onClose}>✕</button>}
       </div>
 
       {items.length === 0 ? (

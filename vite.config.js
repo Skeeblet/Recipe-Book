@@ -17,8 +17,8 @@ export default defineConfig({
       },
       manifest: {
         id: '/Recipe-Book/',
-        name: 'My Recipe Book',
-        short_name: 'Recipes',
+        name: 'My Recipe Box',
+        short_name: 'Recipe Box',
         start_url: '/Recipe-Book/',
         display: 'standalone',
         background_color: '#FAF7F2',

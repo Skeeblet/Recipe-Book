@@ -10,6 +10,8 @@ import Settings from './components/Settings.jsx'
 import AuthButton from './components/AuthButton.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
 import UpdateToast from './components/UpdateToast.jsx'
+import BottomNav from './components/BottomNav.jsx'
+import ProfilePage from './components/ProfilePage.jsx'
 import { usePWAUpdate } from './hooks/usePWAUpdate.js'
 import { useRecipes } from './hooks/useRecipes.js'
 import { useTags } from './hooks/useTags.js'
@@ -138,6 +140,7 @@ export default function App() {
   const [groceryOpen, setGroceryOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [mobileTab, setMobileTab] = useState('recipes')
 
   // Drag state
   const [draggingId, setDraggingId] = useState(null)
@@ -260,7 +263,7 @@ export default function App() {
         onSignIn={signIn}
         onSignOut={signOut}
       />
-      <div className="recipes-container">
+      <div className={`recipes-container${mobileTab !== 'recipes' ? ' hide-mobile' : ''}`}>
         {filteredRecipes.length === 0
           ? <div className="empty-state visible">No recipes match that filter.</div>
           : <div className="recipe-grid">
@@ -281,7 +284,7 @@ export default function App() {
             </div>
         }
       </div>
-      <footer>My Meal Prep Recipe Book &nbsp;·&nbsp; 1,200 cal/day plan &nbsp;·&nbsp; Built with Claude</footer>
+      <footer>My Meal Prep Recipe Box &nbsp;·&nbsp; 1,200 cal/day plan &nbsp;·&nbsp; Built with Claude</footer>
 
       {selectedRecipe && (
         <RecipeDetail
@@ -333,6 +336,26 @@ export default function App() {
         />
       )}
 
+      {mobileTab === 'grocery' && (
+        <GroceryList
+          items={groceryItems}
+          onToggle={toggleItem}
+          onRemove={handleRemoveGroceryItem}
+          onUpdate={updateItem}
+          onClearChecked={handleClearChecked}
+          isFullPage={true}
+        />
+      )}
+
+      {mobileTab === 'profile' && (
+        <ProfilePage
+          user={user}
+          authLoading={authLoading}
+          onSignIn={signIn}
+          onSignOut={signOut}
+        />
+      )}
+
       {formState.open && (
         <RecipeForm
           recipe={formState.recipe}
@@ -357,6 +380,12 @@ export default function App() {
       )}
 
       <UpdateToast visible={updateAvailable} onApply={applyUpdate} />
+
+      <BottomNav
+        activeTab={mobileTab}
+        onTabChange={setMobileTab}
+        groceryCount={uncheckedGroceryCount}
+      />
     </>
   )
 }
