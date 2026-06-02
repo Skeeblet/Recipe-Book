@@ -1,4 +1,4 @@
-export default function ProfilePage({ user, authLoading, onSignIn, onSignOut }) {
+export default function ProfilePage({ user, authLoading, onSignIn, onSignOut, cardMode, onCardModeChange }) {
   return (
     <div className="profile-page">
       <div className="profile-avatar-wrap">
@@ -22,6 +22,21 @@ export default function ProfilePage({ user, authLoading, onSignIn, onSignOut }) 
           </button>
         </>
       )}
+
+      <div className="profile-section">
+        <p className="profile-section-label">Display</p>
+        <div className="card-mode-buttons">
+          {['basic', 'compact', 'deck'].map(mode => (
+            <button
+              key={mode}
+              className={`card-mode-btn${cardMode === mode ? ' active' : ''}`}
+              onClick={() => onCardModeChange(mode)}
+            >
+              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

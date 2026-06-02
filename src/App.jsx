@@ -12,6 +12,8 @@ import ConflictModal from './components/ConflictModal.jsx'
 import UpdateToast from './components/UpdateToast.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import ProfilePage from './components/ProfilePage.jsx'
+import CompactCard from './components/CompactCard.jsx'
+import DeckGrid from './components/DeckGrid.jsx'
 import { usePWAUpdate } from './hooks/usePWAUpdate.js'
 import { useRecipes } from './hooks/useRecipes.js'
 import { useTags } from './hooks/useTags.js'
@@ -141,6 +143,9 @@ export default function App() {
   const [importOpen, setImportOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [mobileTab, setMobileTab] = useState('recipes')
+  const [expandedCardId, setExpandedCardId] = useState(null)
+
+  useEffect(() => { setExpandedCardId(null) }, [settings.cardMode])
 
   // Drag state
   const [draggingId, setDraggingId] = useState(null)
@@ -266,25 +271,45 @@ export default function App() {
         />
       )}
       <div className={`recipes-container${mobileTab !== 'recipes' ? ' hide-mobile' : ''}`}>
-        {filteredRecipes.length === 0
-          ? <div className="empty-state visible">No recipes match that filter.</div>
-          : <div className="recipe-grid">
-              {filteredRecipes.map(recipe => (
-                <RecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  allTags={allTags}
-                  onClick={() => setSelectedRecipe(recipe)}
-                  isDragging={draggingId === recipe.id}
-                  isDragOver={dragOverId === recipe.id}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  onDragEnd={handleDragEnd}
-                />
-              ))}
-            </div>
-        }
+        {filteredRecipes.length === 0 ? (
+          <div className="empty-state visible">No recipes match that filter.</div>
+        ) : settings.cardMode === 'compact' ? (
+          <div className="recipe-grid recipe-grid--compact">
+            {filteredRecipes.map(recipe => (
+              <CompactCard
+                key={recipe.id}
+                recipe={recipe}
+                allTags={allTags}
+                expanded={expandedCardId === recipe.id}
+                onExpand={() => setExpandedCardId(recipe.id)}
+                onOpenDetail={() => { setSelectedRecipe(recipe); setExpandedCardId(null) }}
+              />
+            ))}
+          </div>
+        ) : settings.cardMode === 'deck' ? (
+          <DeckGrid
+            recipes={filteredRecipes}
+            allTags={allTags}
+            onOpenRecipe={setSelectedRecipe}
+          />
+        ) : (
+          <div className="recipe-grid">
+            {filteredRecipes.map(recipe => (
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                allTags={allTags}
+                onClick={() => setSelectedRecipe(recipe)}
+                isDragging={draggingId === recipe.id}
+                isDragOver={dragOverId === recipe.id}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
+              />
+            ))}
+          </div>
+        )}
       </div>
       <footer>My Meal Prep Recipe Box &nbsp;·&nbsp; 1,200 cal/day plan &nbsp;·&nbsp; Built with Claude</footer>
 
@@ -355,6 +380,8 @@ export default function App() {
           authLoading={authLoading}
           onSignIn={signIn}
           onSignOut={signOut}
+          cardMode={settings.cardMode}
+          onCardModeChange={mode => setSetting('cardMode', mode)}
         />
       )}
 

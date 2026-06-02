@@ -600,3 +600,107 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
   .filter-bar-desktop { display: block; }
   .filter-bar { padding: 16px 28px; }
 }
+
+/* ── Compact grid ────────────────────────────────────────────── */
+.recipe-grid--compact {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 769px)  { .recipe-grid--compact { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1025px) { .recipe-grid--compact { grid-template-columns: repeat(4, 1fr); } }
+
+.compact-card {
+  background: var(--warm-white);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer; user-select: none; outline: none;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
+  display: flex; flex-direction: column; gap: 0;
+}
+.compact-card:hover, .compact-card:focus {
+  box-shadow: 0 4px 14px rgba(44,31,20,0.09);
+  border-color: var(--brown-light);
+  transform: translateY(-1px);
+}
+.compact-card--expanded { border-color: var(--brown-light); box-shadow: 0 4px 14px rgba(44,31,20,0.09); }
+.compact-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px; font-weight: 600;
+  color: var(--brown-dark); line-height: 1.2;
+  margin-bottom: 0;
+}
+.compact-card-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.compact-card--expanded .compact-card-body { max-height: 200px; }
+.compact-card-stats { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+.stat--sm { padding: 3px 7px; font-size: 11px; }
+
+/* ── Deck layout ─────────────────────────────────────────────── */
+.recipe-deck {
+  display: flex; flex-direction: column;
+  gap: 6px;
+  padding: 16px 0 40px;
+}
+.deck-card {
+  background: var(--warm-white);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer; user-select: none; outline: none;
+  overflow: hidden;
+  transition: box-shadow 0.25s, border-color 0.25s;
+}
+.deck-card:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.deck-card-header { padding: 14px 20px; }
+.deck-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px; font-weight: 600;
+  color: var(--brown-dark); line-height: 1.2;
+  margin: 0;
+}
+.deck-card-body {
+  max-height: 0; overflow: hidden;
+  padding: 0 20px;
+  transition: max-height 0.35s ease, padding 0.35s ease;
+}
+
+/* Mobile: JS-driven focus */
+.deck-card--focused {
+  border-color: var(--brown-light);
+  box-shadow: 0 4px 16px rgba(44,31,20,0.10);
+}
+.deck-card--focused .deck-card-body {
+  max-height: 2000px;
+  padding: 0 20px 18px;
+}
+
+/* Desktop: neutralize JS focus; only :hover controls appearance */
+@media (min-width: 769px) {
+  .deck-card--focused { border-color: var(--border); box-shadow: none; }
+  .deck-card--focused .deck-card-body { max-height: 0; padding: 0 20px; }
+  .deck-card:hover { border-color: var(--brown-light); box-shadow: 0 4px 16px rgba(44,31,20,0.10); }
+  .deck-card:hover .deck-card-body { max-height: 2000px; padding: 0 20px 18px; }
+}
+
+/* ── Profile display section ─────────────────────────────────── */
+.profile-section { width: 100%; max-width: 280px; margin-top: 20px; }
+.profile-section-label {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 10px; text-align: center;
+}
+.card-mode-buttons { display: flex; gap: 8px; justify-content: center; }
+.card-mode-btn {
+  flex: 1; padding: 9px 0;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: transparent; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-muted);
+  transition: all 0.15s;
+}
+.card-mode-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.card-mode-btn:not(.active):hover { border-color: var(--brown-light); color: var(--text-body); }
