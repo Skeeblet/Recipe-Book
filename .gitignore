@@ -1,8 +1,0 @@
-node_modules/
-dist/
-.vs/
-*.vsidx
-.vscode/
-.DS_Store
-*.local
-.env
