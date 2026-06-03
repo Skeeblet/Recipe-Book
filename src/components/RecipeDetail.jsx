@@ -133,6 +133,7 @@ export default function RecipeDetail({
           message={`Delete "${recipe.title}"? This cannot be undone.`}
           onConfirm={() => { onDelete(); onBack() }}
           onCancel={() => setConfirmDelete(false)}
+          centered
         />
       )}
     </div>

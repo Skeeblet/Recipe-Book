@@ -1,10 +1,10 @@
 function RecipesIcon() {
   return (
-    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7" rx="1" />
-      <rect x="12" y="3" width="7" height="7" rx="1" />
-      <rect x="3" y="12" width="7" height="7" rx="1" />
-      <rect x="12" y="12" width="7" height="7" rx="1" />
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="2.5" width="14" height="17" rx="2.5" />
+      <line x1="7" y1="7.5" x2="15" y2="7.5" />
+      <line x1="7" y1="11" x2="15" y2="11" />
+      <line x1="7" y1="14.5" x2="12" y2="14.5" />
     </svg>
   )
 }

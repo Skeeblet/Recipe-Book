@@ -1,6 +1,6 @@
-export default function ConfirmDialog({ message, confirmLabel = 'Delete', onConfirm, onCancel }) {
+export default function ConfirmDialog({ message, confirmLabel = 'Delete', onConfirm, onCancel, centered = false }) {
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onCancel()}>
+    <div className={`modal-overlay${centered ? ' modal-overlay--centered' : ''}`} onClick={e => e.target === e.currentTarget && onCancel()}>
       <div className="modal confirm-modal">
         <div className="confirm-body">
           <p className="confirm-message">{message}</p>

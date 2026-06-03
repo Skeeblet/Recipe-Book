@@ -111,7 +111,7 @@ export default function FilterBar({
   sortBy, onSortChange,
   onAddRecipe, onImportRecipe,
   groceryCount, onOpenGrocery,
-  onOpenSettings,
+  onOpenSettings, onOpenTagSettings,
   authUser, authLoading, onSignIn, onSignOut,
   cardMode, onCardModeChange,
 }) {
@@ -252,24 +252,33 @@ export default function FilterBar({
         {/* Tag picker panel — overlays content; stays open for multi-select */}
         {mobileTagsOpen && (
           <div className="mobile-tags-panel">
-            <div className="filter-tags">
-              {allTags.map(({ tag, label, color }) => {
-                const isActive = activeTags.includes(tag)
-                return (
-                  <span
-                    key={tag}
-                    className={`ftag${isActive ? ' active' : ''}`}
-                    style={isActive
-                      ? { background: color.text, color: 'white', borderColor: color.text }
-                      : { color: color.text, borderColor: color.bg }
-                    }
-                    onClick={() => handleTagChange(tag)}
-                  >
-                    <span className="dot" /> {label}
-                  </span>
-                )
-              })}
-            </div>
+            {allTags.length === 0 ? (
+              <div className="filter-tags-empty">
+                No tags yet.{' '}
+                <button className="filter-tags-empty-btn" onClick={() => { setMobileTagsOpen(false); onOpenTagSettings?.() }}>
+                  Create one
+                </button>
+              </div>
+            ) : (
+              <div className="filter-tags">
+                {allTags.map(({ tag, label, color }) => {
+                  const isActive = activeTags.includes(tag)
+                  return (
+                    <span
+                      key={tag}
+                      className={`ftag${isActive ? ' active' : ''}`}
+                      style={isActive
+                        ? { background: color.text, color: 'white', borderColor: color.text }
+                        : { color: color.text, borderColor: color.bg }
+                      }
+                      onClick={() => handleTagChange(tag)}
+                    >
+                      <span className="dot" /> {label}
+                    </span>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -302,7 +311,13 @@ export default function FilterBar({
         <div className="filter-bar-top">
           <div>
             <div className="filter-label">Filter by tag</div>
-            <div className="filter-tags">
+            {allTags.length === 0 ? (
+                <div className="filter-tags-empty">
+                  No tags yet.{' '}
+                  <button className="filter-tags-empty-btn" onClick={onOpenTagSettings}>Create one</button>
+                </div>
+              ) : (
+              <div className="filter-tags">
               {allTags.map(({ tag, label, color }) => {
                 const isActive = activeTags.includes(tag)
                 return (
@@ -321,6 +336,7 @@ export default function FilterBar({
                 )
               })}
             </div>
+            )}
           </div>
           <div className="filter-bar-actions">
             <AuthButton user={authUser} authLoading={authLoading} onSignIn={onSignIn} onSignOut={onSignOut} />
