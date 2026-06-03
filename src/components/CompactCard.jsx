@@ -1,16 +1,11 @@
-export default function CompactCard({ recipe, allTags, expanded, onExpand, onOpenDetail }) {
-  function handleClick() {
-    if (expanded) onOpenDetail()
-    else onExpand()
-  }
-
+export default function CompactCard({ recipe, allTags, onClick }) {
   return (
     <div
-      className={`compact-card${expanded ? ' compact-card--expanded' : ''}`}
-      onClick={handleClick}
+      className="compact-card"
+      onClick={onClick}
       role="button"
       tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && handleClick()}
+      onKeyDown={e => e.key === 'Enter' && onClick()}
     >
       <h2 className="compact-card-title">{recipe.title}</h2>
       <div className="compact-card-body">
