@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 const STORAGE_KEY = 'app-settings'
-const DEFAULTS = { smartUnits: true, cardMode: 'deck' }
+const DEFAULTS = { smartUnits: true, cardMode: 'deck', aiModel: 'gemini-1.5-flash', fontSize: 'medium', theme: 'system' }
 
 function load() {
   try {

@@ -122,6 +122,23 @@ export function writeCardOrder(db, uid, orderArray) {
   return setDoc(doc(db, 'users', uid, 'cardOrder', 'order'), { ids: orderArray })
 }
 
+// ─── Delete all user data ─────────────────────────────────────────────────────
+
+export async function deleteAllUserData(db, uid) {
+  const colPaths = ['recipes', 'groceryList', 'customTags']
+  const deletions = []
+
+  for (const col of colPaths) {
+    const snap = await getDocs(collection(db, 'users', uid, col))
+    snap.docs.forEach(d => deletions.push(deleteDoc(d.ref)))
+  }
+
+  deletions.push(deleteDoc(doc(db, 'users', uid, 'settings', 'prefs')))
+  deletions.push(deleteDoc(doc(db, 'users', uid, 'cardOrder', 'order')))
+
+  await Promise.all(deletions)
+}
+
 // ─── Pull all user data ───────────────────────────────────────────────────────
 
 export async function pullAllUserData(db, uid) {

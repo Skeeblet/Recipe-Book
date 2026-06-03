@@ -31,6 +31,7 @@ import {
   deleteRecipeDoc,
   deleteGroceryItemDoc,
   deleteTagDoc,
+  deleteAllUserData,
 } from './firebase/firestoreAdapter.js'
 
 function parseStatValue(recipe, labelKeyword) {
@@ -76,7 +77,7 @@ function sortRecipes(recipes, sortBy, customOrder = []) {
 
 export default function App() {
   const { user, authLoading, signIn, signOut } = useAuth()
-  const { updateAvailable, applyUpdate } = usePWAUpdate()
+  const { updateAvailable, applyUpdate, checkForUpdate } = usePWAUpdate()
   const { recipes, addRecipe, updateRecipe, deleteRecipe, replaceAll: replaceRecipes } = useRecipes()
   const { allTags, customTags, addTag, editTag, deleteTag, replaceAll: replaceTags } = useTags()
   const { items: groceryItems, addIngredients, addItem, updateItem, toggleItem, removeItem, clearChecked, replaceAll: replaceGrocery } = useGroceryList()
@@ -85,6 +86,27 @@ export default function App() {
   const [conflicts, setConflicts] = useState([])
 
   useFirestoreSync(user?.uid ?? null, { recipes, groceryItems, customTags, settings, cardOrder })
+
+  // Apply theme and font-size to document root
+  useEffect(() => {
+    const t = settings.theme || 'system'
+    t === 'system'
+      ? document.documentElement.removeAttribute('data-theme')
+      : document.documentElement.setAttribute('data-theme', t)
+  }, [settings.theme])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-fontsize', settings.fontSize || 'medium')
+  }, [settings.fontSize])
+
+  async function handleDeleteAccount() {
+    if (user) await deleteAllUserData(db, user.uid).catch(console.error)
+    await signOut()
+    ;['app-settings', 'custom-tags', 'user-recipes', 'card-order', 'grocery-list'].forEach(k =>
+      localStorage.removeItem(k)
+    )
+    window.location.reload()
+  }
 
   // Sign-in merge: seed on first sign-in, or merge cloud data with local
   useEffect(() => {
@@ -144,6 +166,7 @@ export default function App() {
   const [importOpen, setImportOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [mobileTab, setMobileTab] = useState('recipes')
+  const [profileInitialPage, setProfileInitialPage] = useState(null)
 
   function handleTabChange(tab) {
     // If a recipe detail is open, close it before switching tabs
@@ -273,6 +296,7 @@ export default function App() {
           groceryCount={uncheckedGroceryCount}
           onOpenGrocery={() => setGroceryOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
+          onOpenTagSettings={() => { setProfileInitialPage('tags'); setMobileTab('profile') }}
           authUser={user}
           authLoading={authLoading}
           onSignIn={signIn}
@@ -391,12 +415,27 @@ export default function App() {
 
       {mobileTab === 'profile' && (
         <ProfilePage
-          user={user}
-          authLoading={authLoading}
-          onSignIn={signIn}
-          onSignOut={signOut}
-          cardMode={settings.cardMode}
-          onCardModeChange={mode => setSetting('cardMode', mode)}
+          initialPage={profileInitialPage}
+          onInitialPageConsumed={() => setProfileInitialPage(null)}
+          auth={{ user, authLoading, onSignIn: signIn, onSignOut: signOut, onDeleteAccount: handleDeleteAccount }}
+          data={{ recipes, allTags, customTags, settings }}
+          handlers={{
+            onSettingChange: setSetting,
+            onEditRecipe: recipe => setFormState({ open: true, recipe }),
+            onDeleteRecipe: handleDelete,
+            onOpenRecipe: setSelectedRecipe,
+            onUpdateRecipe: updateRecipe,
+            onEditTag: editTag,
+            onDeleteTag: slug => {
+              recipes.forEach(r => {
+                if (r.tags.includes(slug)) updateRecipe(r.id, { ...r, tags: r.tags.filter(t => t !== slug) })
+              })
+              deleteTag(slug)
+              if (user) deleteTagDoc(db, user.uid, slug).catch(console.error)
+            },
+            onAddTag: addTag,
+          }}
+          pwa={{ updateAvailable, onApplyUpdate: applyUpdate, onCheckUpdate: checkForUpdate }}
         />
       )}
 
