@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { SEED_RECIPES } from '../data/recipes.js'
 
 const STORAGE_KEY = 'user-recipes'
+const DELETED_SEEDS_KEY = 'deleted-seeds'
+
+const SEED_IDS = new Set(SEED_RECIPES.map(r => r.id))
 
 function loadUserRecipes() {
   try {
@@ -16,12 +19,26 @@ function saveUserRecipes(recipes) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes))
 }
 
+function loadDeletedSeeds() {
+  try {
+    const stored = localStorage.getItem(DELETED_SEEDS_KEY)
+    return stored ? new Set(JSON.parse(stored)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+function saveDeletedSeeds(set) {
+  localStorage.setItem(DELETED_SEEDS_KEY, JSON.stringify([...set]))
+}
+
 export function useRecipes() {
   const [userRecipes, setUserRecipes] = useState(loadUserRecipes)
+  const [deletedSeedIds, setDeletedSeedIds] = useState(loadDeletedSeeds)
 
   const overriddenIds = new Set(userRecipes.map(r => r.id))
   const recipes = [
-    ...SEED_RECIPES.filter(r => !overriddenIds.has(r.id)),
+    ...SEED_RECIPES.filter(r => !overriddenIds.has(r.id) && !deletedSeedIds.has(r.id)),
     ...userRecipes,
   ]
 
@@ -52,11 +69,20 @@ export function useRecipes() {
   }
 
   function deleteRecipe(id) {
+    // Remove from user recipes (covers edited seeds too)
     setUserRecipes(prev => {
       const next = prev.filter(r => r.id !== id)
       saveUserRecipes(next)
       return next
     })
+    // If it's a seed recipe, track the deletion so it doesn't reappear
+    if (SEED_IDS.has(id)) {
+      setDeletedSeedIds(prev => {
+        const next = new Set([...prev, id])
+        saveDeletedSeeds(next)
+        return next
+      })
+    }
   }
 
   function replaceAll(cloudRecipes) {
