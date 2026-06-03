@@ -114,8 +114,19 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .delete-btn:hover { background: #FAE8E8; }
 
 /* Empty state */
-.empty-state { display: none; text-align: center; padding: 60px; color: var(--text-muted); font-size: 15px; }
-.empty-state.visible { display: block; }
+.empty-state { display: none; }
+.empty-state.visible {
+  display: block;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 15px;
+  pointer-events: none;
+  z-index: 10;
+}
 
 /* Footer */
 footer { background: var(--brown-dark); color: #8C7060; text-align: center; padding: 28px; font-size: 13px; font-weight: 300; margin-top: 48px; }
@@ -494,41 +505,10 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
   align-items: center;
   padding: 6px 16px;
   gap: 4px;
-  max-height: 52px;
-  opacity: 1;
-  overflow: hidden;
-  transition: max-height 0.2s ease, opacity 0.15s ease, padding 0.15s ease;
-}
-.mobile-icon-row.search-open {
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-.mobile-search-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
-  padding: 0 16px;
-  transition: max-height 0.2s ease, opacity 0.15s ease, padding 0.15s ease;
-}
-.mobile-search-row.search-open {
-  max-height: 52px;
-  opacity: 1;
-  pointer-events: auto;
-  padding: 6px 16px;
 }
 
 /* Relative positioning anchors absolute panels */
 .filter-bar-mobile { position: relative; }
-
-.mobile-search-row .search-input { flex: 1; max-width: none; }
 
 /* ── Mobile icon buttons ──────────────────────────────────────── */
 .mobile-icon-btn {
@@ -545,7 +525,16 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 .mobile-icon-btn svg    { width: 20px; height: 20px; }
 .mobile-icon-row .mobile-icon-btn:last-child { margin-left: auto; }
 
-/* ── Mobile sort + tag panels: overlay content ────────────────── */
+/* ── Mobile search / sort / tag panels: overlay content ──────── */
+
+/* clip-path reveals the panel from top to bottom so it appears to slide
+   out from underneath the header without ever visually crossing it. */
+@keyframes panel-slide-down {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+.mobile-search-panel,
 .mobile-sort-panel,
 .mobile-tags-panel {
   position: absolute;
@@ -555,6 +544,19 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
   border-bottom: 1px solid var(--border);
   box-shadow: 0 4px 16px rgba(44,31,20,0.08);
   z-index: 90;
+  animation: panel-slide-down 0.12s ease;
+}
+
+.mobile-search-panel {
+  padding: 10px 16px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mobile-search-panel .search-input { flex: 1; max-width: none; }
+
+.mobile-sort-panel,
+.mobile-tags-panel {
   padding: 10px 16px 14px;
 }
 .mobile-sort-panel .sort-select {
@@ -593,6 +595,11 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
   color: inherit;
 }
 .active-tag-chip-clear:hover { opacity: 1; }
+.active-tag-chip--search {
+  background: var(--brown-dark);
+  color: var(--cream);
+  font-style: italic;
+}
 
 /* ── Tablet (769px–1024px): full bar, no mobile icons ─────────── */
 @media (min-width: 769px) and (max-width: 1024px) {
@@ -630,11 +637,7 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
   color: var(--brown-dark); line-height: 1.2;
   margin-bottom: 0;
 }
-.compact-card-body {
-  max-height: 0; overflow: hidden;
-  transition: max-height 0.3s ease;
-}
-.compact-card--expanded .compact-card-body { max-height: 200px; }
+.compact-card-body { /* always visible */ }
 .compact-card-stats { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
 .stat--sm { padding: 3px 7px; font-size: 11px; }
 
@@ -643,46 +646,73 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
   display: flex; flex-direction: column;
   padding: 16px 0 40px;
 }
-/* On mobile: large padding lets the first and last cards scroll to the viewport center */
+
+/* ── Mobile deck: fixed scroll container with snap ───────────────────────────
+   scroll-padding-top MUST match padding-top and SNAP_OFFSET in DeckGrid.jsx.
+   Without scroll-padding-top the browser snaps cards to y=0 (raw container top)
+   instead of y=75px, causing wrong card detection and missing breathing room.
+   padding-bottom = full container height guarantees the last card can always
+   reach the snap position regardless of how many cards there are.
+   padding-left/right matches the 24px horizontal padding of .recipes-container. */
 @media (max-width: 768px) {
-  .recipe-deck { padding-top: 45vh; padding-bottom: 50vh; }
+  .recipe-deck {
+    position: fixed;
+    top: var(--filter-bar-height);
+    left: 0; right: 0;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: y mandatory;
+    scroll-padding-top: 75px;
+    overscroll-behavior-y: contain;
+    padding: 75px 24px calc(100svh - var(--filter-bar-height) - 64px - env(safe-area-inset-bottom));
+  }
 }
 
-/* Cards are always fully rendered — no collapsed state.
-   Each card after the first overlaps the previous one so only
-   the title area of each card peeks above the card in front of it.
-   DOM order gives the correct stacking: later = visually on top,
-   so the bottommost recipe has the highest visual priority. */
 .deck-card {
   position: relative;
   background: var(--warm-white);
   border: 1.5px solid var(--border);
   border-radius: 14px;
   cursor: pointer; user-select: none; outline: none;
-  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s,
-              margin-top 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: box-shadow 0.2s, border-color 0.2s;
 }
 /* Tight overlap — only the title header (~52px) peeks above the card in front */
-.deck-card + .deck-card { margin-top: -170px; }
+.deck-card + .deck-card {
+  margin-top: -170px;
+  /* transform starts at 0 so the spring animation plays on change */
+  transform: translateY(0);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
-/* Hover / focus (desktop) — placed BEFORE active so active border wins on overlap */
-.deck-card:hover, .deck-card:focus {
+/* Snap each card to the container's scroll-padding-top position (mobile only) */
+@media (max-width: 768px) {
+  .deck-card {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+}
+
+/* Hover (desktop only) */
+.deck-card:hover {
   box-shadow: 0 6px 20px rgba(44,31,20,0.12);
   border-color: var(--brown-light);
   transform: translateY(-3px);
-  z-index: 60;  /* below detail-overlay (150) so card never floats above an open detail */
-  outline: none;
 }
+.deck-card:focus { outline: none; }
 
-/* Active card — placed AFTER hover so the orange border always wins */
+/* Active card — orange border only */
 .deck-card--active {
-  z-index: 50;
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 0 2.5px var(--accent), 0 6px 24px rgba(212,98,42,0.2) !important;
-  transform: none !important;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2.5px var(--accent), 0 6px 24px rgba(212,98,42,0.2);
 }
-/* Card immediately below the active one gets breathing room */
-.deck-card--active + .deck-card { margin-top: 16px; }
+/* Push ALL cards below the active one down as a unit using transform so the
+   active card's full content is visible. ~ (general sibling) instead of +
+   (adjacent only) keeps the whole stack moving together.
+   transform doesn't affect layout or snap positions — no 186px shift problem. */
+.deck-card--active ~ .deck-card {
+  transform: translateY(186px);
+}
 
 .deck-card-header { padding: 14px 20px; }
 .deck-card-title {
@@ -692,6 +722,25 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
   margin: 0;
 }
 .deck-card-body { padding: 0 20px 18px; }
+
+/* ── Deck end: spiderweb + message ──────────────────────────────── */
+.deck-end {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 10px;
+  padding: 32px 0 24px;
+  color: var(--text-muted);
+  opacity: 0.4;
+  /* Move with the card stack when any card above is active */
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.deck-card--active ~ .deck-end {
+  transform: translateY(186px);
+}
+.deck-end-web { width: 88px; height: 81px; }
+.deck-end-text {
+  font-size: 13px; font-style: italic; font-weight: 300;
+  letter-spacing: 0.02em;
+}
 
 /* ── Profile display section ─────────────────────────────────── */
 .profile-section { width: 100%; max-width: 280px; margin-top: 20px; }

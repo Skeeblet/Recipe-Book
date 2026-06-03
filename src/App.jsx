@@ -14,6 +14,7 @@ import BottomNav from './components/BottomNav.jsx'
 import ProfilePage from './components/ProfilePage.jsx'
 import CompactCard from './components/CompactCard.jsx'
 import DeckGrid from './components/DeckGrid.jsx'
+import RecipeListEnd from './components/RecipeListEnd.jsx'
 import { usePWAUpdate } from './hooks/usePWAUpdate.js'
 import { useRecipes } from './hooks/useRecipes.js'
 import { useTags } from './hooks/useTags.js'
@@ -123,7 +124,7 @@ export default function App() {
     }).catch(console.error)
   }, [user?.uid, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [activeTag, setActiveTag] = useState('all')
+  const [activeTags, setActiveTags] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('alpha')
   const [selectedRecipe, setSelectedRecipe] = useState(null)
@@ -143,16 +144,18 @@ export default function App() {
   const [importOpen, setImportOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [mobileTab, setMobileTab] = useState('recipes')
-  const [expandedCardId, setExpandedCardId] = useState(null)
 
-  useEffect(() => { setExpandedCardId(null) }, [settings.cardMode])
 
   // Drag state
   const [draggingId, setDraggingId] = useState(null)
   const [dragOverId, setDragOverId] = useState(null)
 
+  function toggleTag(tag) {
+    setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  }
+
   function matchesFilters(recipe) {
-    const matchesTag = activeTag === 'all' || recipe.tags.includes(activeTag)
+    const matchesTag = activeTags.length === 0 || activeTags.every(t => recipe.tags.includes(t))
     if (!matchesTag) return false
     if (!searchQuery.trim()) return true
     const q = searchQuery.toLowerCase()
@@ -253,8 +256,8 @@ export default function App() {
       {mobileTab === 'recipes' && (
         <FilterBar
           allTags={allTags}
-          activeTag={activeTag}
-          onTagChange={setActiveTag}
+          activeTags={activeTags}
+          onTagChange={toggleTag}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           sortBy={sortBy}
@@ -268,24 +271,27 @@ export default function App() {
           authLoading={authLoading}
           onSignIn={signIn}
           onSignOut={signOut}
+          cardMode={settings.cardMode}
+          onCardModeChange={mode => setSetting('cardMode', mode)}
         />
       )}
       <div className={`recipes-container${mobileTab !== 'recipes' ? ' hide-mobile' : ''}`}>
         {filteredRecipes.length === 0 ? (
           <div className="empty-state visible">No recipes match that filter.</div>
         ) : settings.cardMode === 'compact' ? (
-          <div className="recipe-grid recipe-grid--compact">
-            {filteredRecipes.map(recipe => (
-              <CompactCard
-                key={recipe.id}
-                recipe={recipe}
-                allTags={allTags}
-                expanded={expandedCardId === recipe.id}
-                onExpand={() => setExpandedCardId(recipe.id)}
-                onOpenDetail={() => { setSelectedRecipe(recipe); setExpandedCardId(null) }}
-              />
-            ))}
-          </div>
+          <>
+            <div className="recipe-grid recipe-grid--compact">
+              {filteredRecipes.map(recipe => (
+                <CompactCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  allTags={allTags}
+                  onClick={() => setSelectedRecipe(recipe)}
+                />
+              ))}
+            </div>
+            <RecipeListEnd />
+          </>
         ) : settings.cardMode === 'deck' ? (
           <DeckGrid
             recipes={filteredRecipes}
@@ -293,22 +299,25 @@ export default function App() {
             onOpenRecipe={setSelectedRecipe}
           />
         ) : (
-          <div className="recipe-grid">
-            {filteredRecipes.map(recipe => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                allTags={allTags}
-                onClick={() => setSelectedRecipe(recipe)}
-                isDragging={draggingId === recipe.id}
-                isDragOver={dragOverId === recipe.id}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onDragEnd={handleDragEnd}
-              />
-            ))}
-          </div>
+          <>
+            <div className="recipe-grid">
+              {filteredRecipes.map(recipe => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  allTags={allTags}
+                  onClick={() => setSelectedRecipe(recipe)}
+                  isDragging={draggingId === recipe.id}
+                  isDragOver={dragOverId === recipe.id}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onDragEnd={handleDragEnd}
+                />
+              ))}
+            </div>
+            <RecipeListEnd />
+          </>
         )}
       </div>
       <footer>My Meal Prep Recipe Box &nbsp;·&nbsp; 1,200 cal/day plan &nbsp;·&nbsp; Built with Claude</footer>

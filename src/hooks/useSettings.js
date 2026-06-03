@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 const STORAGE_KEY = 'app-settings'
-const DEFAULTS = { smartUnits: true, cardMode: 'basic' }
+const DEFAULTS = { smartUnits: true, cardMode: 'deck' }
 
 function load() {
   try {
