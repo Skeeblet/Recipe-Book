@@ -1,40 +1,49 @@
 import { useState, useEffect, useRef } from 'react'
 import DeckCard from './DeckCard.jsx'
+import RecipeListEnd from './RecipeListEnd.jsx'
+
+// Must match CSS scroll-padding-top on .recipe-deck
+const SNAP_OFFSET = 75
 
 export default function DeckGrid({ recipes, allTags, onOpenRecipe }) {
   const [activeId, setActiveId] = useState(recipes[0]?.id ?? null)
+  const containerRef = useRef(null)
   const cardRefs = useRef({})
 
-  // On mount: center the first card instantly
+  // On mount: scroll container to 0 so the first card sits at the snap position
   useEffect(() => {
-    requestAnimationFrame(() => {
-      const el = cardRefs.current[recipes[0]?.id]
-      if (el) el.scrollIntoView({ behavior: 'instant', block: 'center' })
-    })
+    if (containerRef.current) containerRef.current.scrollTop = 0
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Detect which card is currently snapped.
+  // Uses el.offsetTop (layout position, unaffected by CSS transform) so the
+  // transform: translateY(186px) on the active card's sibling doesn't fool us.
   function detectActive() {
-    const mid = window.innerHeight / 2
+    const container = containerRef.current
+    if (!container) return
+    // In the container's coordinate space: snap position = scrollTop + SNAP_OFFSET
+    const snapPos = container.scrollTop + SNAP_OFFSET
     let bestId = null, bestDist = Infinity
     for (const [id, el] of Object.entries(cardRefs.current)) {
       if (!el) continue
-      const { top, height } = el.getBoundingClientRect()
-      const dist = Math.abs(top + height / 2 - mid)
+      const dist = Math.abs(el.offsetTop - snapPos)
       if (dist < bestDist) { bestDist = dist; bestId = id }
     }
     if (bestId) setActiveId(prev => prev !== bestId ? bestId : prev)
   }
 
-  // Scroll listener: card whose center is closest to viewport midpoint is active
+  // Listen on the container's own scroll, not window
   useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
     function onScroll() { detectActive() }
-    window.addEventListener('scroll', onScroll, { passive: true })
+    container.addEventListener('scroll', onScroll, { passive: true })
     detectActive()
-    return () => window.removeEventListener('scroll', onScroll)
+    return () => container.removeEventListener('scroll', onScroll)
   }, [recipes]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="recipe-deck">
+    <div ref={containerRef} className="recipe-deck">
       {recipes.map(recipe => (
         <DeckCard
           key={recipe.id}
@@ -45,6 +54,8 @@ export default function DeckGrid({ recipes, allTags, onOpenRecipe }) {
           cardRef={el => { cardRefs.current[recipe.id] = el }}
         />
       ))}
+
+      <RecipeListEnd />
     </div>
   )
 }
