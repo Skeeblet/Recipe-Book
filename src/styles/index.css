@@ -651,12 +651,10 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 }
 
 /* ── Mobile deck: fixed scroll container with snap ───────────────────────────
-   scroll-padding-top MUST match padding-top and SNAP_OFFSET in DeckGrid.jsx.
-   Without scroll-padding-top the browser snaps cards to y=0 (raw container top)
-   instead of y=75px, causing wrong card detection and missing breathing room.
-   padding-bottom = full container height guarantees the last card can always
-   reach the snap position regardless of how many cards there are.
-   padding-left/right matches the 24px horizontal padding of .recipes-container. */
+   Free-scrolling container — no snap. The active card is detected by the
+   scroll listener in DeckGrid.jsx as the card closest to ACTIVE_OFFSET (30px)
+   from the container top. padding-top matches ACTIVE_OFFSET; padding-bottom
+   ensures the last card can be scrolled to the detection position. */
 @media (max-width: 768px) {
   .recipe-deck {
     position: fixed;
@@ -665,10 +663,8 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
     bottom: calc(64px + env(safe-area-inset-bottom));
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
-    scroll-snap-type: y mandatory;
-    scroll-padding-top: 75px;
     overscroll-behavior-y: contain;
-    padding: 75px 24px calc(100svh - var(--filter-bar-height) - 64px - env(safe-area-inset-bottom));
+    padding: 80px 24px 50vh;
   }
 }
 
@@ -683,18 +679,10 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 /* Tight overlap — only the title header (~52px) peeks above the card in front */
 .deck-card + .deck-card {
   margin-top: -170px;
-  /* transform starts at 0 so the spring animation plays on change */
   transform: translateY(0);
-  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.2s ease-out;
 }
 
-/* Snap each card to the container's scroll-padding-top position (mobile only) */
-@media (max-width: 768px) {
-  .deck-card {
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-  }
-}
 
 /* Hover (desktop only) */
 .deck-card:hover {

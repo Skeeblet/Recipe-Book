@@ -2,27 +2,48 @@ import { useState, useEffect, useRef } from 'react'
 import DeckCard from './DeckCard.jsx'
 import RecipeListEnd from './RecipeListEnd.jsx'
 
-// Must match CSS scroll-padding-top on .recipe-deck
-const SNAP_OFFSET = 75
+// How far from the container's top edge the active card is detected.
+// Matches the padding-top on .recipe-deck in CSS.
+const ACTIVE_OFFSET = 80
 
 export default function DeckGrid({ recipes, allTags, onOpenRecipe }) {
   const [activeId, setActiveId] = useState(recipes[0]?.id ?? null)
   const containerRef = useRef(null)
-  const cardRefs = useRef({})
+  const cardRefs    = useRef({})
+  const endRef      = useRef(null)
 
-  // On mount: scroll container to 0 so the first card sits at the snap position
+  // Set padding-bottom so the scroll range ends exactly when the last card
+  // reaches the active position. We avoid reading container.scrollHeight because
+  // Chrome inflates it when child elements have CSS transforms applied, giving
+  // an incorrect value. Instead we build the layout height from offsetTop/offsetHeight
+  // directly — these are layout coordinates unaffected by transforms.
   useEffect(() => {
-    if (containerRef.current) containerRef.current.scrollTop = 0
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    const container = containerRef.current
+    if (!container) return
+    container.scrollTop = 0
 
-  // Detect which card is currently snapped.
-  // Uses el.offsetTop (layout position, unaffected by CSS transform) so the
-  // transform: translateY(186px) on the active card's sibling doesn't fool us.
+    const lastEl  = cardRefs.current[recipes[recipes.length - 1]?.id]
+    const endEl   = endRef.current
+    if (!lastEl) return
+
+    const filterBarH  = 52
+    const bottomNavH  = 64
+    const containerH  = window.innerHeight - filterBarH - bottomNavH
+
+    // Layout height = padding-top already baked into offsetTop + last card height + end element
+    const layoutContent = lastEl.offsetTop + lastEl.offsetHeight + (endEl?.offsetHeight ?? 0)
+
+    // We want: max scrollTop = lastEl.offsetTop - ACTIVE_OFFSET
+    // So:      scrollHeight  = (lastEl.offsetTop - ACTIVE_OFFSET) + containerH
+    const targetScrollH = lastEl.offsetTop - ACTIVE_OFFSET + containerH
+    const pb = Math.max(targetScrollH - layoutContent, 0)
+    container.style.paddingBottom = `${pb}px`
+  }, [recipes]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function detectActive() {
     const container = containerRef.current
     if (!container) return
-    // In the container's coordinate space: snap position = scrollTop + SNAP_OFFSET
-    const snapPos = container.scrollTop + SNAP_OFFSET
+    const snapPos = container.scrollTop + ACTIVE_OFFSET
     let bestId = null, bestDist = Infinity
     for (const [id, el] of Object.entries(cardRefs.current)) {
       if (!el) continue
@@ -32,7 +53,6 @@ export default function DeckGrid({ recipes, allTags, onOpenRecipe }) {
     if (bestId) setActiveId(prev => prev !== bestId ? bestId : prev)
   }
 
-  // Listen on the container's own scroll, not window
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -54,8 +74,9 @@ export default function DeckGrid({ recipes, allTags, onOpenRecipe }) {
           cardRef={el => { cardRefs.current[recipe.id] = el }}
         />
       ))}
-
-      <RecipeListEnd />
+      <div ref={endRef}>
+        <RecipeListEnd />
+      </div>
     </div>
   )
 }
