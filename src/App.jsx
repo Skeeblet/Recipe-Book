@@ -145,6 +145,12 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [mobileTab, setMobileTab] = useState('recipes')
 
+  function handleTabChange(tab) {
+    // If a recipe detail is open, close it before switching tabs
+    if (selectedRecipe) window.history.back()
+    setMobileTab(tab)
+  }
+
 
   // Drag state
   const [draggingId, setDraggingId] = useState(null)
@@ -421,7 +427,7 @@ export default function App() {
 
       <BottomNav
         activeTab={mobileTab}
-        onTabChange={setMobileTab}
+        onTabChange={handleTabChange}
         groceryCount={uncheckedGroceryCount}
       />
     </>

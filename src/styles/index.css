@@ -69,6 +69,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 
 /* Detail overlay */
 .detail-overlay { position: fixed; inset: 0; z-index: 150; background: var(--cream); overflow-y: auto; animation: detailIn 0.22s ease; }
+@media (max-width: 768px) {
+  .detail-overlay { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+}
 @keyframes detailIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 .detail-topbar { position: sticky; top: 0; z-index: 10; background: var(--warm-white); border-bottom: 1px solid var(--border); padding: 14px 40px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 10px rgba(44,31,20,0.07); }
 .detail-back-btn { display: flex; align-items: center; gap: 4px; background: none; border: 1.5px solid var(--border); color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: 20px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
@@ -324,7 +327,7 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 
 /* Print */
 @media print {
-  .cover, .filter-bar, .recipes-container, footer, .modal-overlay, .grocery-panel, .settings-overlay { display: none !important; }
+  .cover, .filter-bar, .recipes-container, footer, .modal-overlay, .grocery-panel, .settings-overlay, .bottom-nav { display: none !important; }
   .detail-overlay { position: static !important; animation: none !important; overflow: visible !important; }
   .detail-topbar { display: none !important; }
   .detail-content { padding: 20px !important; }
