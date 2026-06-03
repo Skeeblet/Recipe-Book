@@ -1,18 +1,14 @@
-export default function DeckCard({ recipe, allTags, focused, onFocus, onOpenDetail, headerRef }) {
-  function handleClick() {
-    if (focused) onOpenDetail()
-    else onFocus()
-  }
-
+export default function DeckCard({ recipe, allTags, active, onOpenDetail, cardRef }) {
   return (
     <div
-      className={`deck-card${focused ? ' deck-card--focused' : ''}`}
-      onClick={handleClick}
+      ref={cardRef}
+      className={`deck-card${active ? ' deck-card--active' : ''}`}
+      onClick={onOpenDetail}
       role="button"
       tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && handleClick()}
+      onKeyDown={e => e.key === 'Enter' && onOpenDetail()}
     >
-      <div className="deck-card-header" ref={headerRef} data-recipe-id={recipe.id}>
+      <div className="deck-card-header">
         <h2 className="deck-card-title">{recipe.title}</h2>
       </div>
       <div className="deck-card-body">

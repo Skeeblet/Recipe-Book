@@ -2,30 +2,36 @@ import { useState, useEffect, useRef } from 'react'
 import DeckCard from './DeckCard.jsx'
 
 export default function DeckGrid({ recipes, allTags, onOpenRecipe }) {
-  const [focusedId, setFocusedId] = useState(recipes[0]?.id ?? null)
-  const headerRefs = useRef({})
+  const [activeId, setActiveId] = useState(recipes[0]?.id ?? null)
+  const cardRefs = useRef({})
 
+  // On mount: center the first card instantly
   useEffect(() => {
-    if (window.innerWidth > 768) return  // desktop uses CSS :hover only
+    requestAnimationFrame(() => {
+      const el = cardRefs.current[recipes[0]?.id]
+      if (el) el.scrollIntoView({ behavior: 'instant', block: 'center' })
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setFocusedId(entry.target.dataset.recipeId)
-          // Disconnect immediately to prevent layout-shift cascade as the
-          // newly expanded card pushes others around. Reconnect after the
-          // CSS transition finishes (400ms).
-          obs.disconnect()
-          setTimeout(() => {
-            Object.values(headerRefs.current).forEach(el => { if (el) obs.observe(el) })
-          }, 400)
-        }
-      })
-    }, { threshold: 0.8, rootMargin: '-15% 0px -55% 0px' })
+  function detectActive() {
+    const mid = window.innerHeight / 2
+    let bestId = null, bestDist = Infinity
+    for (const [id, el] of Object.entries(cardRefs.current)) {
+      if (!el) continue
+      const { top, height } = el.getBoundingClientRect()
+      const dist = Math.abs(top + height / 2 - mid)
+      if (dist < bestDist) { bestDist = dist; bestId = id }
+    }
+    if (bestId) setActiveId(prev => prev !== bestId ? bestId : prev)
+  }
 
-    Object.values(headerRefs.current).forEach(el => { if (el) obs.observe(el) })
-    return () => obs.disconnect()
-  }, [recipes])
+  // Scroll listener: card whose center is closest to viewport midpoint is active
+  useEffect(() => {
+    function onScroll() { detectActive() }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    detectActive()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [recipes]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="recipe-deck">
@@ -34,10 +40,9 @@ export default function DeckGrid({ recipes, allTags, onOpenRecipe }) {
           key={recipe.id}
           recipe={recipe}
           allTags={allTags}
-          focused={focusedId === recipe.id}
-          onFocus={() => setFocusedId(recipe.id)}
+          active={activeId === recipe.id}
           onOpenDetail={() => onOpenRecipe(recipe)}
-          headerRef={el => { headerRefs.current[recipe.id] = el }}
+          cardRef={el => { cardRefs.current[recipe.id] = el }}
         />
       ))}
     </div>
