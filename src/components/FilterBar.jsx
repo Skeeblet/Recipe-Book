@@ -1,6 +1,39 @@
 import { useState, useEffect, useRef } from 'react'
 import AuthButton from './AuthButton.jsx'
 
+// ── View mode icons ───────────────────────────────────────────────────────────
+
+function BasicViewIcon() {
+  return (
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="18" height="18" rx="3" />
+    </svg>
+  )
+}
+
+function CompactViewIcon() {
+  return (
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="8" height="8" rx="1.5" />
+      <rect x="12" y="2" width="8" height="8" rx="1.5" />
+      <rect x="2" y="12" width="8" height="8" rx="1.5" />
+      <rect x="12" y="12" width="8" height="8" rx="1.5" />
+    </svg>
+  )
+}
+
+function DeckViewIcon() {
+  return (
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="12" width="18" height="7" rx="2" fill="var(--warm-white)" />
+      <rect x="2" y="7" width="18" height="7" rx="2" fill="var(--warm-white)" />
+      <rect x="2" y="2" width="18" height="7" rx="2" fill="var(--warm-white)" />
+    </svg>
+  )
+}
+
+const VIEW_MODES = ['basic', 'compact', 'deck']
+
 // ── Inline SVG icons ──────────────────────────────────────────────────────────
 
 function SearchIcon() {
@@ -73,14 +106,25 @@ const SORT_OPTIONS = [
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function FilterBar({
-  allTags, activeTag, onTagChange,
+  allTags, activeTags, onTagChange,
   searchQuery, onSearchChange,
   sortBy, onSortChange,
   onAddRecipe, onImportRecipe,
   groceryCount, onOpenGrocery,
   onOpenSettings,
   authUser, authLoading, onSignIn, onSignOut,
+  cardMode, onCardModeChange,
 }) {
+  function cycleView() {
+    const next = VIEW_MODES[(VIEW_MODES.indexOf(cardMode) + 1) % VIEW_MODES.length]
+    onCardModeChange(next)
+  }
+
+  function ViewIcon() {
+    if (cardMode === 'compact') return <CompactViewIcon />
+    if (cardMode === 'deck')    return <DeckViewIcon />
+    return <BasicViewIcon />
+  }
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [mobileTagsOpen,   setMobileTagsOpen]   = useState(false)
   const [mobileSortOpen,   setMobileSortOpen]   = useState(false)
@@ -97,12 +141,16 @@ export default function FilterBar({
       if (curr > lastScrollY.current + 8)      el.classList.add('filter-bar--hidden')
       else if (curr < lastScrollY.current - 8) el.classList.remove('filter-bar--hidden')
       lastScrollY.current = curr
+      // Close any open panels when the user scrolls the recipe list
+      setMobileTagsOpen(false)
+      setMobileSortOpen(false)
+      setMobileSearchOpen(false)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Escape closes any open mobile panel
+  // Escape or tap outside closes any open mobile panel
   useEffect(() => {
     function onKey(e) {
       if (e.key !== 'Escape') return
@@ -110,8 +158,19 @@ export default function FilterBar({
       setMobileTagsOpen(false)
       setMobileSortOpen(false)
     }
+    function onOutside(e) {
+      if (!filterBarRef.current?.contains(e.target)) {
+        setMobileSearchOpen(false)
+        setMobileTagsOpen(false)
+        setMobileSortOpen(false)
+      }
+    }
     document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    document.addEventListener('pointerdown', onOutside)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('pointerdown', onOutside)
+    }
   }, [])
 
   // Focus the search input only when the user explicitly opens it
@@ -119,10 +178,8 @@ export default function FilterBar({
     if (mobileSearchOpen) searchInputRef.current?.focus()
   }, [mobileSearchOpen])
 
-  function handleTagChange(tag) { onTagChange(tag); setMobileTagsOpen(false) }
+  function handleTagChange(tag) { onTagChange(tag) } // keep panel open for multi-select
   function handleSortChange(val) { onSortChange(val); setMobileSortOpen(false) }
-
-  const activeTagObj = activeTag !== 'all' ? allTags.find(t => t.tag === activeTag) : null
 
   return (
     <div ref={filterBarRef} className="filter-bar">
@@ -130,54 +187,56 @@ export default function FilterBar({
       {/* ── Mobile layout (≤768px via CSS) ── */}
       <div className="filter-bar-mobile">
 
-        {/* Icon row — collapses when search opens */}
-        <div className={`mobile-icon-row${mobileSearchOpen ? ' search-open' : ''}`}>
-          <button className="mobile-icon-btn" onClick={() => setMobileSearchOpen(true)} aria-label="Search">
+        {/* Icon row — always visible */}
+        <div className="mobile-icon-row">
+          <button
+            className={`mobile-icon-btn${(mobileSearchOpen || searchQuery) ? ' active' : ''}`}
+            onClick={() => { setMobileSearchOpen(v => !v); setMobileTagsOpen(false); setMobileSortOpen(false) }}
+            aria-label="Search"
+          >
             <SearchIcon />
           </button>
           <button
             className={`mobile-icon-btn${mobileSortOpen ? ' active' : ''}`}
-            onClick={() => { setMobileSortOpen(v => !v); setMobileTagsOpen(false) }}
+            onClick={() => { setMobileSortOpen(v => !v); setMobileTagsOpen(false); setMobileSearchOpen(false) }}
             aria-label="Sort"
           >
             <SortIcon />
           </button>
           <button
-            className={`mobile-icon-btn${mobileTagsOpen || activeTag !== 'all' ? ' active' : ''}`}
-            onClick={() => { setMobileTagsOpen(v => !v); setMobileSortOpen(false) }}
+            className={`mobile-icon-btn${mobileTagsOpen || activeTags.length > 0 ? ' active' : ''}`}
+            onClick={() => { setMobileTagsOpen(v => !v); setMobileSortOpen(false); setMobileSearchOpen(false) }}
             aria-label="Filter by tag"
           >
             <TagIcon />
+          </button>
+          <button className="mobile-icon-btn" onClick={cycleView} aria-label="Switch view">
+            <ViewIcon />
           </button>
           <button className="mobile-icon-btn" onClick={onAddRecipe} aria-label="Add recipe">
             <PlusIcon />
           </button>
         </div>
 
-        {/* Search row — expands when search opens */}
-        <div className={`mobile-search-row${mobileSearchOpen ? ' search-open' : ''}`}>
-          <button
-            className="mobile-icon-btn"
-            onClick={() => { setMobileSearchOpen(false); onSearchChange('') }}
-            aria-label="Close search"
-          >
-            <BackIcon />
-          </button>
-          <input
-            ref={searchInputRef}
-            type="text"
-            className="search-input"
-            placeholder="Search recipes, ingredients..."
-            value={searchQuery}
-            onChange={e => onSearchChange(e.target.value)}
-            onKeyDown={e => e.key === 'Escape' && setMobileSearchOpen(false)}
-          />
-          {searchQuery && (
-            <button className="mobile-icon-btn" onClick={() => onSearchChange('')} aria-label="Clear search">
-              <CloseIcon />
-            </button>
-          )}
-        </div>
+        {/* Search panel — overlays content below the bar */}
+        {mobileSearchOpen && (
+          <div className="mobile-search-panel">
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="search-input"
+              placeholder="Search recipes, ingredients..."
+              value={searchQuery}
+              onChange={e => onSearchChange(e.target.value)}
+              onKeyDown={e => (e.key === 'Escape' || e.key === 'Enter') && setMobileSearchOpen(false)}
+            />
+            {searchQuery && (
+              <button className="mobile-icon-btn" onClick={() => onSearchChange('')} aria-label="Clear search">
+                <CloseIcon />
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Sort picker panel — overlays content */}
         {mobileSortOpen && (
@@ -190,19 +249,12 @@ export default function FilterBar({
           </div>
         )}
 
-        {/* Tag picker panel — overlays content */}
+        {/* Tag picker panel — overlays content; stays open for multi-select */}
         {mobileTagsOpen && (
           <div className="mobile-tags-panel">
             <div className="filter-tags">
-              <span
-                className={`ftag${activeTag === 'all' ? ' active' : ''}`}
-                data-tag="all"
-                onClick={() => handleTagChange('all')}
-              >
-                <span className="dot" /> All recipes
-              </span>
               {allTags.map(({ tag, label, color }) => {
-                const isActive = activeTag === tag
+                const isActive = activeTags.includes(tag)
                 return (
                   <span
                     key={tag}
@@ -221,16 +273,26 @@ export default function FilterBar({
           </div>
         )}
 
-        {/* Active tag chip — shown when tag active and picker is closed */}
-        {activeTagObj && !mobileTagsOpen && (
+        {/* Active filter chips — tags + search keyword, hidden while the relevant panel is open */}
+        {(activeTags.length > 0 || (searchQuery && !mobileSearchOpen)) && !mobileTagsOpen && (
           <div className="active-tag-chips">
-            <span
-              className="active-tag-chip"
-              style={{ background: activeTagObj.color.bg, color: activeTagObj.color.text }}
-            >
-              {activeTagObj.label}
-              <button className="active-tag-chip-clear" onClick={() => onTagChange('all')}>×</button>
-            </span>
+            {activeTags.map(tag => {
+              const def = allTags.find(t => t.tag === tag)
+              if (!def) return null
+              return (
+                <span key={tag} className="active-tag-chip"
+                  style={{ background: def.color.bg, color: def.color.text }}>
+                  {def.label}
+                  <button className="active-tag-chip-clear" onClick={() => onTagChange(tag)}>×</button>
+                </span>
+              )
+            })}
+            {searchQuery && !mobileSearchOpen && (
+              <span className="active-tag-chip active-tag-chip--search">
+                "{searchQuery}"
+                <button className="active-tag-chip-clear" onClick={() => onSearchChange('')}>×</button>
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -241,16 +303,8 @@ export default function FilterBar({
           <div>
             <div className="filter-label">Filter by tag</div>
             <div className="filter-tags">
-              <span
-                className={`ftag${activeTag === 'all' ? ' active' : ''}`}
-                data-tag="all"
-                onClick={() => onTagChange('all')}
-              >
-                <span className="dot" />
-                All recipes
-              </span>
               {allTags.map(({ tag, label, color }) => {
-                const isActive = activeTag === tag
+                const isActive = activeTags.includes(tag)
                 return (
                   <span
                     key={tag}
