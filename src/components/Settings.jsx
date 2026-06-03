@@ -45,7 +45,7 @@ function RecipesTab({ recipes, allTags, onEdit, onDelete }) {
 
   return (
     <div className="settings-section">
-      <p className="settings-hint">All recipes. Seed recipes can be edited but not deleted.</p>
+      <p className="settings-hint">All recipes.</p>
       <div className="settings-recipe-list">
         {recipes.map(recipe => (
           <div key={recipe.id} className="settings-recipe-row">
@@ -65,9 +65,7 @@ function RecipesTab({ recipes, allTags, onEdit, onDelete }) {
             </div>
             <div className="settings-recipe-actions">
               <button className="settings-action-btn" onClick={() => onEdit(recipe)}>Edit</button>
-              {recipe.id.startsWith('user-') && (
-                <button className="settings-action-btn danger" onClick={() => setConfirmId(recipe.id)}>Delete</button>
-              )}
+              <button className="settings-action-btn danger" onClick={() => setConfirmId(recipe.id)}>Delete</button>
             </div>
           </div>
         ))}
@@ -77,6 +75,7 @@ function RecipesTab({ recipes, allTags, onEdit, onDelete }) {
           message={`Delete "${confirmRecipe.title}"? This cannot be undone.`}
           onConfirm={() => { onDelete(confirmRecipe.id); setConfirmId(null) }}
           onCancel={() => setConfirmId(null)}
+          centered
         />
       )}
     </div>
@@ -84,7 +83,10 @@ function RecipesTab({ recipes, allTags, onEdit, onDelete }) {
 }
 
 /* ── Tags tab ────────────────────────────────────────── */
-function TagsTab({ customTags, recipes, onEdit, onDelete }) {
+function TagsTab({ customTags: allStoredTags, recipes, onEdit, onDelete }) {
+  // Built-ins are now seeded into customTags; show them read-only in the built-in section
+  // and only show truly user-created tags in the Custom section
+  const customTags = allStoredTags.filter(t => !BUILT_IN_TAGS.some(bt => bt.tag === t.tag))
   const [editingSlug, setEditingSlug] = useState(null)
   const [editLabel, setEditLabel] = useState('')
   const [editColor, setEditColor] = useState(null)
