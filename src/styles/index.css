@@ -670,6 +670,7 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 
 .deck-card {
   position: relative;
+  z-index: 1; /* always above .deck-end, which is last in DOM and would otherwise win */
   background: var(--warm-white);
   border: 1.5px solid var(--border);
   border-radius: 14px;
