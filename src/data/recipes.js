@@ -29,7 +29,11 @@ export const SEED_RECIPES = [
       'In the morning, give it a stir. If too thick, add a small splash of almond milk. Should be creamy and thick, not watery.',
       'Dice the whole apple into small chunks and add on top fresh.',
     ],
-    notes: 'Apple: One whole apple per jar — buy 5 apples for a 5-day week. Always add fresh, never the night before. | Oats: Rolled oats only — instant turns to paste overnight. | Shelf life: Jars keep 5 days in the fridge. Make all 5 Sunday night. Days 4–5 may thicken — add a splash of almond milk.',
+    notes: [
+      { title: 'Apple', body: 'One whole apple per jar — buy 5 apples for a 5-day week. Always add fresh, never the night before.' },
+      { title: 'Oats', body: 'Rolled oats only — instant turns to paste overnight.' },
+      { title: 'Shelf life', body: 'Jars keep 5 days in the fridge. Make all 5 Sunday night. Days 4–5 may thicken — add a splash of almond milk.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -62,7 +66,11 @@ export const SEED_RECIPES = [
       'Pour egg whites over the vegetables and let spread across the pan. Season with garlic powder, salt, and pepper. Do not stir — let it set on the bottom for about 2 minutes.',
       'Once the edges look set and the top is mostly cooked through, fold one half over the other. Cook 30–60 more seconds then slide onto your plate.',
     ],
-    notes: 'Egg whites: Buy liquid egg whites in a carton (Egg Beaters or store brand) — much easier than separating eggs. | Calorie swap: At only 135 cal this gives you 185 extra calories of flexibility elsewhere in your day. | Non-stick pan is essential — egg whites stick badly to stainless steel.',
+    notes: [
+      { title: 'Egg whites', body: 'Buy liquid egg whites in a carton (Egg Beaters or store brand) — much easier than separating eggs.' },
+      { title: 'Calorie swap', body: 'At only 135 cal this gives you 185 extra calories of flexibility elsewhere in your day.' },
+      { title: '', body: 'Non-stick pan is essential — egg whites stick badly to stainless steel.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -96,7 +104,12 @@ export const SEED_RECIPES = [
       'Add black beans, soy sauce, and rice wine vinegar. Toss and cook 2 minutes until sauce coats everything.',
       'Add cauliflower rice and fold everything together. Cook 2–3 minutes until heated through and sauce is absorbed.',
     ],
-    notes: 'Cauliflower rice: Add at the end — goes mushy if overcooked. | Soy sauce: Taste as you go. | Optional finish: 3–4 drops sesame oil right before serving. | Shelf life: 4–5 days in airtight containers.',
+    notes: [
+      { title: 'Cauliflower rice', body: 'Add at the end — goes mushy if overcooked.' },
+      { title: 'Soy sauce', body: 'Taste as you go.' },
+      { title: 'Optional finish', body: '3–4 drops sesame oil right before serving.' },
+      { title: 'Shelf life', body: '4–5 days in airtight containers.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -139,7 +152,11 @@ export const SEED_RECIPES = [
       'Reduce heat to low, cover partially, and simmer 25–30 minutes stirring occasionally until thickened.',
       'Taste and adjust — more heat? Add cayenne. Too thick? Add a splash more broth.',
     ],
-    notes: 'Flavor tip: Tastes even better on days 2 and 3 as flavors develop. | Topping: Use nonfat Greek yogurt instead of sour cream — saves ~50 cal and adds protein. | Shelf life: 5 days in the fridge, or freeze portions for up to 3 months.',
+    notes: [
+      { title: 'Flavor tip', body: 'Tastes even better on days 2 and 3 as flavors develop.' },
+      { title: 'Topping', body: 'Use nonfat Greek yogurt instead of sour cream — saves ~50 cal and adds protein.' },
+      { title: 'Shelf life', body: '5 days in the fridge, or freeze portions for up to 3 months.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -169,7 +186,11 @@ export const SEED_RECIPES = [
       'Layer the second tortilla on top. Spread remaining BBQ sauce, chicken, and cheese on top.',
       'Bake at 425°F for 7 minutes until cheese is melted and tortilla edges are crispy. Let sit 1–2 minutes, top with red pepper flakes, then slice.',
     ],
-    notes: 'Half serving: Split into 2 meals at ~314 cal each — reheat the second half in the oven or air fryer at 375°F for 3–4 min to keep it crispy. | Crispier base: Place directly on the oven rack instead of a baking sheet. | BBQ sauce: Use Recipe 06 for a less sweet, tangier, spicier version.',
+    notes: [
+      { title: 'Half serving', body: 'Split into 2 meals at ~314 cal each — reheat the second half in the oven or air fryer at 375°F for 3–4 min to keep it crispy.' },
+      { title: 'Crispier base', body: 'Place directly on the oven rack instead of a baking sheet.' },
+      { title: 'BBQ sauce', body: 'Use Recipe 06 for a less sweet, tangier, spicier version.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -207,7 +228,12 @@ export const SEED_RECIPES = [
       'Taste and adjust — more tang? Add a splash more apple cider vinegar. More heat? Add more cayenne. Too tangy? Add a tiny bit more monk fruit sweetener, a few drops at a time.',
       'Cool completely then transfer to a jar. Store in the fridge for up to 2 weeks.',
     ],
-    notes: 'Cost: ~$1.25 per batch vs $3–4 for G Hughes or $10+ for specialty sugar free brands. Makes enough for 2–3 pizzas. | Sweetener: Use Great Value Monk Fruit & Erythritol (~$5 for 16oz at Walmart) — no bitter aftertaste unlike stevia. | Liquid smoke: Do not exceed 1 tsp — a little goes a very long way. | Tip: Flavor improves significantly after 24 hours in the fridge.',
+    notes: [
+      { title: 'Cost', body: '~$1.25 per batch vs $3–4 for G Hughes or $10+ for specialty sugar free brands. Makes enough for 2–3 pizzas.' },
+      { title: 'Sweetener', body: 'Use Great Value Monk Fruit & Erythritol (~$5 for 16oz at Walmart) — no bitter aftertaste unlike stevia.' },
+      { title: 'Liquid smoke', body: 'Do not exceed 1 tsp — a little goes a very long way.' },
+      { title: 'Tip', body: 'Flavor improves significantly after 24 hours in the fridge.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -241,7 +267,9 @@ export const SEED_RECIPES = [
       'Let chicken rest 5 minutes, then slice.',
       'Build the bowl: cauliflower rice base, sliced chicken, tomatoes, cucumber, onion, and olives. Drizzle lemon juice over the top.',
     ],
-    notes: 'Meal prep: cook 4 chicken breasts and portion into containers. Keep toppings separate until ready to eat so they stay fresh. Add a dollop of nonfat Greek yogurt as a sour cream substitute.',
+    notes: [
+      { title: 'Meal prep', body: 'Cook 4 chicken breasts and portion into containers. Keep toppings separate until ready to eat so they stay fresh. Add a dollop of nonfat Greek yogurt as a sour cream substitute.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -273,7 +301,9 @@ export const SEED_RECIPES = [
       'Mix in Greek yogurt, sriracha, lime juice, green onions, salt, and pepper. Taste and adjust heat.',
       'Spoon mixture into romaine lettuce cups and top with diced cucumber.',
     ],
-    notes: 'Protein swap: works just as well with canned salmon or shredded rotisserie chicken. Add diced avocado for healthy fats (+50 cal per ¼ avocado).',
+    notes: [
+      { title: 'Protein swap', body: 'Works just as well with canned salmon or shredded rotisserie chicken. Add diced avocado for healthy fats (+50 cal per ¼ avocado).' },
+    ],
     isUserAdded: false,
   },
   {
@@ -305,7 +335,9 @@ export const SEED_RECIPES = [
       'Flip carefully and cook another 60–90 seconds. Protein pancakes are delicate — keep them small.',
       'Serve with sugar free maple syrup.',
     ],
-    notes: 'Riper banana = sweeter pancakes and easier mashing. Use a blender for the smoothest batter. Do not use high heat — protein powder burns easily.',
+    notes: [
+      { title: '', body: 'Riper banana = sweeter pancakes and easier mashing. Use a blender for the smoothest batter. Do not use high heat — protein powder burns easily.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -340,7 +372,9 @@ export const SEED_RECIPES = [
       'Pour in broth, tomatoes, and black beans. Bring to a boil then reduce heat and simmer 20 minutes.',
       'Stir in lime juice. Taste and adjust seasoning. Serve with a spoonful of nonfat Greek yogurt.',
     ],
-    notes: 'Freeze portions in quart bags laid flat — they stack neatly and defrost in 30 minutes in warm water.',
+    notes: [
+      { title: '', body: 'Freeze portions in quart bags laid flat — they stack neatly and defrost in 30 minutes in warm water.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -373,7 +407,9 @@ export const SEED_RECIPES = [
       'Add peas and carrots. Toss everything together. Add soy sauce, garlic powder, and sesame oil. Stir fry 2 more minutes.',
       'Return shrimp to pan, toss, and top with sliced green onions.',
     ],
-    notes: 'Key to good fried rice: HIGH heat and dry cauliflower rice. Thaw and pat dry the cauliflower rice before cooking or it will steam instead of fry.',
+    notes: [
+      { title: 'Key to good fried rice', body: 'HIGH heat and dry cauliflower rice. Thaw and pat dry the cauliflower rice before cooking or it will steam instead of fry.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -403,7 +439,9 @@ export const SEED_RECIPES = [
       'Top with berries, chia seeds, and hemp hearts.',
       'Drizzle sweetener and dust with cinnamon.',
     ],
-    notes: 'Savory version: swap berries for sliced cucumber, cherry tomatoes, and everything bagel seasoning. Both versions are under 250 cal and pack 25–30g protein.',
+    notes: [
+      { title: 'Savory version', body: 'Swap berries for sliced cucumber, cherry tomatoes, and everything bagel seasoning. Both versions are under 250 cal and pack 25–30g protein.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -435,7 +473,9 @@ export const SEED_RECIPES = [
       'Form into golf ball-sized balls (~1.5 oz each). Place on baking sheet with space between them.',
       'Bake 18–20 minutes until cooked through (internal temp 165°F) and slightly browned on top.',
     ],
-    notes: 'Batch: this recipe makes ~16 meatballs. Freeze half — they reheat perfectly from frozen at 350°F for 12 minutes. Pair with a no-sugar marinara sauce for minimal added calories.',
+    notes: [
+      { title: 'Batch', body: 'This recipe makes ~16 meatballs. Freeze half — they reheat perfectly from frozen at 350°F for 12 minutes. Pair with a no-sugar marinara sauce for minimal added calories.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -467,7 +507,9 @@ export const SEED_RECIPES = [
       'Bake 12–14 minutes until the fish flakes easily with a fork. Do not overcook.',
       'Season with salt and black pepper. Serve immediately.',
     ],
-    notes: 'Thickness matters: a 1-inch fillet takes ~12 minutes, thicker takes up to 15. The fish will continue cooking after you pull it from the oven.',
+    notes: [
+      { title: 'Thickness matters', body: 'A 1-inch fillet takes ~12 minutes, thicker takes up to 15. The fish will continue cooking after you pull it from the oven.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -500,7 +542,9 @@ export const SEED_RECIPES = [
       'Stir vigorously adding pasta water 1 tbsp at a time until you get a creamy, smooth sauce.',
       'Season with smoked paprika, salt, and pepper. Serve immediately.',
     ],
-    notes: 'Key: the pasta must be very hot when you add the yogurt or it will curdle. Work quickly and stir constantly. The sauce gets thicker as it cools.',
+    notes: [
+      { title: 'Key', body: 'The pasta must be very hot when you add the yogurt or it will curdle. Work quickly and stir constantly. The sauce gets thicker as it cools.' },
+    ],
     isUserAdded: false,
   },
   {
@@ -535,7 +579,9 @@ export const SEED_RECIPES = [
       'Reduce heat and simmer 20 minutes until vegetables are tender.',
       'Stir in spinach and cook until wilted. Season with salt and pepper.',
     ],
-    notes: 'Add 2 oz dry whole wheat pasta for a more filling meal (+70 cal). Soup thickens as it sits in the fridge — thin with a splash of broth when reheating.',
+    notes: [
+      { title: '', body: 'Add 2 oz dry whole wheat pasta for a more filling meal (+70 cal). Soup thickens as it sits in the fridge — thin with a splash of broth when reheating.' },
+    ],
     isUserAdded: false,
   },
 ]

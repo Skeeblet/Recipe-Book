@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { parseNotesToArray } from '../utils/parseNotes.js'
 
 const TEMPLATE = JSON.stringify({
   title: "Recipe Name",
@@ -61,7 +62,7 @@ export default function ImportRecipeModal({ allTags, onAddTag, onImport, onClose
       stats:        Array.isArray(parsed.stats)       ? parsed.stats       : [],
       ingredients:  Array.isArray(parsed.ingredients) ? parsed.ingredients : [],
       steps:        Array.isArray(parsed.steps)       ? parsed.steps       : [],
-      notes:        parsed.notes || '',
+      notes:        parseNotesToArray(parsed.notes),
       isUserAdded:  true,
     })
   }
