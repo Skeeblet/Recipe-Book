@@ -959,7 +959,7 @@ html:not([data-theme="light"]) .deck-card + .deck-card.deck-card--active {
    (adjacent only) keeps the whole stack moving together.
    transform doesn't affect layout or snap positions — no 186px shift problem. */
 .deck-card--active ~ .deck-card {
-  transform: translateY(var(--active-card-height, 200px));
+  transform: translateY(calc(var(--active-card-height, 200px) - 40px));
 }
 
 .deck-card-header { padding: 14px 20px 4px; border-bottom: 1px solid var(--border); }
@@ -983,7 +983,7 @@ html:not([data-theme="light"]) .deck-card + .deck-card.deck-card--active {
   transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .deck-card--active ~ .deck-end {
-  transform: translateY(var(--active-card-height, 200px));
+  transform: translateY(calc(var(--active-card-height, 200px) - 40px));
 }
 .deck-end-web { width: 88px; height: 81px; }
 .deck-end-text {
