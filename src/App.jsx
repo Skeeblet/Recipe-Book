@@ -13,7 +13,7 @@ import UpdateToast from './components/UpdateToast.jsx'
 import ShareToast from './components/ShareToast.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import ProfilePage from './components/ProfilePage.jsx'
-import CompactCard from './components/CompactCard.jsx'
+import MasonryGrid from './components/MasonryGrid.jsx'
 import DeckGrid from './components/DeckGrid.jsx'
 import RecipeListEnd from './components/RecipeListEnd.jsx'
 import { usePWAUpdate } from './hooks/usePWAUpdate.js'
@@ -373,16 +373,11 @@ export default function App() {
           <div className="empty-state visible">No recipes match that filter.</div>
         ) : settings.cardMode === 'compact' ? (
           <>
-            <div className="recipe-grid recipe-grid--compact">
-              {filteredRecipes.map(recipe => (
-                <CompactCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  allTags={allTags}
-                  onClick={() => setSelectedRecipe(recipe)}
-                />
-              ))}
-            </div>
+            <MasonryGrid
+              recipes={filteredRecipes}
+              allTags={allTags}
+              onCardClick={setSelectedRecipe}
+            />
             <RecipeListEnd />
           </>
         ) : settings.cardMode === 'deck' ? (

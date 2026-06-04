@@ -848,12 +848,9 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 }
 
 /* ── Compact grid ────────────────────────────────────────────── */
-.recipe-grid--compact {
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-@media (min-width: 769px)  { .recipe-grid--compact { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1025px) { .recipe-grid--compact { grid-template-columns: repeat(4, 1fr); } }
+.masonry-container { padding: 24px 0 40px; }
+.masonry-grid { display: flex; gap: 10px; align-items: flex-start; }
+.masonry-col { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
 
 .compact-card {
   background: var(--warm-white);
@@ -881,6 +878,8 @@ html[data-theme="dark"] .compact-card { box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
 }
 .compact-card-body { padding: 8px 14px 12px; }
 .compact-card-stats { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.compact-card-arrow { font-size: 0.75rem; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; transition: color 0.15s; margin-top: 8px; }
+.compact-card:hover .compact-card-arrow, .compact-card:focus .compact-card-arrow { color: var(--accent); }
 .stat--sm { padding: 3px 7px; font-size: 0.6875rem; }
 
 /* ── Deck layout ─────────────────────────────────────────────── */

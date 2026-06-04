@@ -31,6 +31,7 @@ export default function CompactCard({ recipe, allTags, onClick }) {
             </div>
           ))}
         </div>
+        <div className="compact-card-arrow">View recipe →</div>
       </div>
     </div>
   )
