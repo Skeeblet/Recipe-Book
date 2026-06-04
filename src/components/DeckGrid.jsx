@@ -29,12 +29,32 @@ export default function DeckGrid({ recipes, allTags, onOpenRecipe }) {
 
   // Set --active-card-height on the container so subsequent cards and the deck
   // end element translate the right distance to reveal the full active card.
+  // Also trigger the exit animation on the card that was previously behind the
+  // active card — CSS can't animate the removal of :has(+ .deck-card--active),
+  // so we add a class before paint to play the reverse animation manually.
+  const prevActiveIdRef = useRef(null)
   useLayoutEffect(() => {
     const container = containerRef.current
     if (!container || !activeId) return
     const el = cardRefs.current[activeId]
     if (el) container.style.setProperty('--active-card-height', el.offsetHeight + 'px')
-  }, [activeId])
+
+    const prevId = prevActiveIdRef.current
+    prevActiveIdRef.current = activeId
+    if (prevId && prevId !== activeId) {
+      const prevIdx = recipes.findIndex(r => r.id === prevId)
+      const behindRecipe = prevIdx > 0 ? recipes[prevIdx - 1] : null
+      const behindEl = behindRecipe && behindRecipe.id !== activeId
+        ? cardRefs.current[behindRecipe.id]
+        : null
+      if (behindEl) {
+        behindEl.classList.add('deck-card--peek-exit')
+        behindEl.addEventListener('animationend', () => {
+          behindEl.classList.remove('deck-card--peek-exit')
+        }, { once: true })
+      }
+    }
+  }, [activeId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Set padding-bottom so the scroll range ends exactly when the last card
   // reaches the active position. We avoid reading container.scrollHeight because

@@ -961,6 +961,36 @@ html:not([data-theme="light"]) .deck-card + .deck-card.deck-card--active {
 .deck-card--active ~ .deck-card {
   transform: translateY(calc(var(--active-card-height, 200px) - 40px));
 }
+@keyframes deck-peek-slide-up {
+  from {
+    -webkit-mask-image: linear-gradient(to bottom, black 500px, transparent 520px);
+    mask-image: linear-gradient(to bottom, black 500px, transparent 520px);
+  }
+  to {
+    -webkit-mask-image: linear-gradient(to bottom, black 80px, transparent 100px);
+    mask-image: linear-gradient(to bottom, black 80px, transparent 100px);
+  }
+}
+@keyframes deck-peek-slide-down {
+  from {
+    -webkit-mask-image: linear-gradient(to bottom, black 80px, transparent 100px);
+    mask-image: linear-gradient(to bottom, black 80px, transparent 100px);
+  }
+  to {
+    -webkit-mask-image: linear-gradient(to bottom, black 500px, transparent 520px);
+    mask-image: linear-gradient(to bottom, black 500px, transparent 520px);
+  }
+}
+.deck-card:has(+ .deck-card--active) {
+  -webkit-mask-image: linear-gradient(to bottom, black 80px, transparent 100px);
+  mask-image: linear-gradient(to bottom, black 80px, transparent 100px);
+  animation: deck-peek-slide-up 0.3s ease-out;
+}
+.deck-card--peek-exit {
+  -webkit-mask-image: linear-gradient(to bottom, black 80px, transparent 100px) !important;
+  mask-image: linear-gradient(to bottom, black 80px, transparent 100px) !important;
+  animation: deck-peek-slide-down 0.3s ease-out forwards !important;
+}
 
 .deck-card-header { padding: 14px 20px 4px; border-bottom: 1px solid var(--border); }
 .deck-card-title {
