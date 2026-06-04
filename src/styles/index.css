@@ -912,14 +912,13 @@ html[data-theme="dark"] .compact-card { box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
   background: var(--warm-white);
   border: 1.5px solid var(--border);
   border-radius: 14px;
-  min-height: 260px;
   display: flex; flex-direction: column;
   cursor: pointer; user-select: none; outline: none;
   transition: box-shadow 0.2s, border-color 0.2s;
 }
-/* Tight overlap — only the title header (~52px) peeks above the card in front */
+/* margin-top is set inline by DeckGrid.useLayoutEffect — heights are read in one
+   batch pass then written, so each card's top lands at a consistent DECK_PEEK interval. */
 .deck-card + .deck-card {
-  margin-top: -180px;
   transform: translateY(0);
   transition: transform 0.2s ease-out;
   box-shadow: 0 -6px 10px rgba(44,31,20,0.09);
@@ -960,7 +959,7 @@ html:not([data-theme="light"]) .deck-card + .deck-card.deck-card--active {
    (adjacent only) keeps the whole stack moving together.
    transform doesn't affect layout or snap positions — no 186px shift problem. */
 .deck-card--active ~ .deck-card {
-  transform: translateY(198px);
+  transform: translateY(var(--active-card-height, 200px));
 }
 
 .deck-card-header { padding: 14px 20px 4px; border-bottom: 1px solid var(--border); }
@@ -970,8 +969,8 @@ html:not([data-theme="light"]) .deck-card + .deck-card.deck-card--active {
   color: var(--brown-dark); line-height: 1.2;
   margin: 0;
 }
-.deck-card-body { padding: 4px 20px 18px; flex: 1; display: flex; flex-direction: column; }
-.deck-card-body .recipe-card-arrow { margin-top: auto; padding-top: 12px; }
+.deck-card-body { padding: 4px 20px 18px; display: flex; flex-direction: column; }
+.deck-card-body .recipe-card-arrow { margin-top: 12px; }
 
 /* ── Deck end: spiderweb + message ──────────────────────────────── */
 .deck-end {
@@ -984,7 +983,7 @@ html:not([data-theme="light"]) .deck-card + .deck-card.deck-card--active {
   transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .deck-card--active ~ .deck-end {
-  transform: translateY(186px);
+  transform: translateY(var(--active-card-height, 200px));
 }
 .deck-end-web { width: 88px; height: 81px; }
 .deck-end-text {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import DeckCard from './DeckCard.jsx'
 import RecipeListEnd from './RecipeListEnd.jsx'
 
@@ -6,11 +6,35 @@ import RecipeListEnd from './RecipeListEnd.jsx'
 // Matches the padding-top on .recipe-deck in CSS.
 const ACTIVE_OFFSET = 80
 
+// Pixels of each card's header that remain visible above the next card in the stack.
+const DECK_PEEK = 80
+
 export default function DeckGrid({ recipes, allTags, onOpenRecipe }) {
   const [activeId, setActiveId] = useState(recipes[0]?.id ?? null)
   const containerRef = useRef(null)
   const cardRefs    = useRef({})
   const endRef      = useRef(null)
+
+  // Read all card heights in one pass first, then write margins — interleaving
+  // reads and writes causes the browser to recompute layout mid-loop, producing
+  // stale values. Batch reads → batch writes to get correct measurements.
+  useLayoutEffect(() => {
+    const heights = recipes.map(r => cardRefs.current[r.id]?.offsetHeight ?? 0)
+    recipes.forEach((recipe, i) => {
+      const el = cardRefs.current[recipe.id]
+      if (!el) return
+      el.style.marginTop = i === 0 ? '' : `${-heights[i - 1] + DECK_PEEK}px`
+    })
+  }, [recipes])
+
+  // Set --active-card-height on the container so subsequent cards and the deck
+  // end element translate the right distance to reveal the full active card.
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container || !activeId) return
+    const el = cardRefs.current[activeId]
+    if (el) container.style.setProperty('--active-card-height', el.offsetHeight + 'px')
+  }, [activeId])
 
   // Set padding-bottom so the scroll range ends exactly when the last card
   // reaches the active position. We avoid reading container.scrollHeight because
