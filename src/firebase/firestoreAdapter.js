@@ -198,3 +198,14 @@ export async function seedFirestore(db, uid, { recipes, groceryList, tags, setti
     await batch.commit()
   }
 }
+
+// ─── Public recipe sharing ─────────────────────────────────────────────────
+
+export async function fetchPublicRecipe(db, recipeId) {
+  const snap = await getDoc(doc(db, 'publicRecipes', String(recipeId)))
+  return snap.exists() ? snap.data() : null
+}
+
+export function writePublicRecipe(db, recipe) {
+  return setDoc(doc(db, 'publicRecipes', String(recipe.id)), { ...recipe, sharedAt: serverTimestamp() })
+}
