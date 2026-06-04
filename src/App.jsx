@@ -10,6 +10,7 @@ import Settings from './components/Settings.jsx'
 import AuthButton from './components/AuthButton.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
 import UpdateToast from './components/UpdateToast.jsx'
+import ShareToast from './components/ShareToast.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import ProfilePage from './components/ProfilePage.jsx'
 import CompactCard from './components/CompactCard.jsx'
@@ -32,7 +33,21 @@ import {
   deleteGroceryItemDoc,
   deleteTagDoc,
   deleteAllUserData,
+  fetchPublicRecipe,
+  writePublicRecipe,
 } from './firebase/firestoreAdapter.js'
+import { shareRecipe } from './utils/shareRecipe.js'
+
+function parseTimeToMinutes(str) {
+  if (!str) return Infinity
+  const s = str.toLowerCase()
+  let total = 0
+  const hr = s.match(/(\d+(?:\.\d+)?)\s*h/)
+  if (hr) total += parseFloat(hr[1]) * 60
+  const min = s.match(/(\d+(?:\.\d+)?)\s*m/)
+  if (min) total += parseFloat(min[1])
+  return total || Infinity
+}
 
 function parseStatValue(recipe, labelKeyword) {
   const stat = recipe.stats.find(s => s.label.toLowerCase().includes(labelKeyword))
@@ -62,6 +77,8 @@ function sortRecipes(recipes, sortBy, customOrder = []) {
           return parseInt(b.id.replace('user-', '')) - parseInt(a.id.replace('user-', ''))
         return parseInt(a.num) - parseInt(b.num)
       })
+    case 'time-asc':
+      return r.sort((a, b) => parseTimeToMinutes(a.estimatedTime) - parseTimeToMinutes(b.estimatedTime))
     case 'custom': {
       const posMap = new Map(customOrder.map((id, i) => [id, i]))
       return r.sort((a, b) => {
@@ -150,12 +167,15 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('alpha')
   const [selectedRecipe, setSelectedRecipe] = useState(null)
+  const [sharedRecipe, setSharedRecipe] = useState(null)
+  const [toastMsg, setToastMsg] = useState(null)
+  const deepLinkHandled = useRef(false)
 
   // Push a history entry when detail opens so the browser back button closes it
   useEffect(() => {
     if (!selectedRecipe) return
     window.history.pushState({ recipeDetail: true }, '')
-    function onPopState() { setSelectedRecipe(null) }
+    function onPopState() { setSelectedRecipe(null); setSharedRecipe(null) }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [!!selectedRecipe]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -234,6 +254,49 @@ export default function App() {
     }
     setConflicts(prev => prev.filter(r => r.id !== recipe.id))
   }
+
+  function showToast(msg) { setToastMsg(msg) }
+
+  async function handleShare(recipe) {
+    if (!user) {
+      await shareRecipe(recipe, () => {})
+      showToast('Sign in to make the share link work for others.')
+      return
+    }
+    await shareRecipe(recipe, showToast)
+    writePublicRecipe(db, recipe).catch(console.error)
+  }
+
+  function handleAddSharedRecipe(name) {
+    if (!sharedRecipe) return
+    const id = 'user-' + Date.now()
+    addRecipe({ ...sharedRecipe, id, title: name || sharedRecipe.title, isUserAdded: true })
+    appendNew(id)
+    setSharedRecipe(null)
+    setSelectedRecipe(null)
+    showToast('Added to your recipes!')
+  }
+
+  // Deep link: open recipe from ?recipe=id query param
+  useEffect(() => {
+    if (authLoading) return
+    if (recipes.length === 0) return
+    if (deepLinkHandled.current) return
+    deepLinkHandled.current = true
+
+    const params = new URLSearchParams(window.location.search)
+    const recipeId = params.get('recipe')
+    if (!recipeId) return
+
+    window.history.replaceState({}, '', window.location.pathname)
+
+    const local = recipes.find(r => r.id === recipeId)
+    if (local) { setSelectedRecipe(local); return }
+
+    fetchPublicRecipe(db, recipeId).then(pub => {
+      if (pub) { setSharedRecipe(pub); setSelectedRecipe(pub) }
+    }).catch(console.error)
+  }, [authLoading, recipes]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleDelete(id) {
     deleteRecipe(id)
@@ -337,6 +400,7 @@ export default function App() {
                   recipe={recipe}
                   allTags={allTags}
                   onClick={() => setSelectedRecipe(recipe)}
+                  onShare={e => { e.stopPropagation(); handleShare(recipe) }}
                   isDragging={draggingId === recipe.id}
                   isDragOver={dragOverId === recipe.id}
                   onDragStart={handleDragStart}
@@ -365,6 +429,12 @@ export default function App() {
           onDelete={() => handleDelete(selectedRecipe.id)}
           onAddIngredients={(recipe) => { addIngredients(recipe); setGroceryOpen(true) }}
           onAddItem={(name, amount, recipeTitle) => { addItem(name, amount, recipeTitle); setGroceryOpen(true) }}
+          onShare={() => handleShare(selectedRecipe)}
+          isSharedView={sharedRecipe != null && sharedRecipe.id === selectedRecipe.id}
+          existingTitles={recipes.map(r => r.title.trim().toLowerCase())}
+          authUser={user}
+          onSignIn={signIn}
+          onAddToMyRecipes={handleAddSharedRecipe}
         />
       )}
 
@@ -446,6 +516,7 @@ export default function App() {
           onAddTag={addTag}
           onSubmit={handleFormSubmit}
           onClose={() => setFormState({ open: false, recipe: null })}
+          recipes={recipes}
         />
       )}
 
@@ -463,6 +534,7 @@ export default function App() {
       )}
 
       <UpdateToast visible={updateAvailable} onApply={applyUpdate} />
+      <ShareToast message={toastMsg} onDismiss={() => setToastMsg(null)} />
 
       <BottomNav
         activeTab={mobileTab}

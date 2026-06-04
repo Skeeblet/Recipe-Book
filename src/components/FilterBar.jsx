@@ -100,6 +100,7 @@ const SORT_OPTIONS = [
   { value: 'fiber-desc',   label: 'Fiber: high → low' },
   { value: 'fat-asc',      label: 'Fat: low → high' },
   { value: 'date-desc',    label: 'Date added: newest' },
+  { value: 'time-asc',    label: 'Time: quick first' },
   { value: 'custom',       label: 'Custom order' },
 ]
 

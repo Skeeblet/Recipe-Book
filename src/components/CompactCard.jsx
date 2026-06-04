@@ -1,3 +1,5 @@
+import OverflowTagList from './OverflowTagList.jsx'
+
 export default function CompactCard({ recipe, allTags, onClick }) {
   return (
     <div
@@ -9,20 +11,21 @@ export default function CompactCard({ recipe, allTags, onClick }) {
     >
       <h2 className="compact-card-title">{recipe.title}</h2>
       <div className="compact-card-body">
-        <p className="recipe-card-desc">{recipe.description}</p>
-        <div className="recipe-tags">
-          {recipe.tags.map(tag => {
-            const def = allTags.find(t => t.tag === tag)
-            return def
-              ? <span key={tag} className="rtag" style={{ background: def.color.bg, color: def.color.text }}>{def.label}</span>
-              : null
-          })}
+        <div className="recipe-desc-row">
+          <p className="recipe-card-desc">{recipe.description}</p>
+          {recipe.estimatedTime && (
+            <div className="recipe-time-badge">⏱ {recipe.estimatedTime}</div>
+          )}
         </div>
+        <OverflowTagList tags={recipe.tags} allTags={allTags} />
       </div>
       <div className="compact-card-stats">
-        {recipe.stats.map((stat, i) => (
-          <div key={i} className={`stat stat--sm${stat.colorClass ? ' ' + stat.colorClass : ''}`}>
-            <span className="stat-val">{stat.value}</span>
+        {recipe.stats.filter(s => s.value?.toString().trim()).map((stat, i) => (
+          <div key={i}
+            className={`stat stat--sm${!stat.color && stat.colorClass ? ' ' + stat.colorClass : ''}`}
+            style={stat.color ? { background: stat.color.bg } : {}}
+          >
+            <span className="stat-val" style={stat.color ? { color: stat.color.text } : {}}>{stat.value}</span>
             <span className="stat-label">{stat.label}</span>
           </div>
         ))}

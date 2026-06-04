@@ -5,11 +5,13 @@ import ConfirmDialog from './ConfirmDialog.jsx'
 export default function RecipeDetail({
   recipe, allTags, onBack, onPrint, onEdit, onDelete, isPrinting,
   onAddIngredients, onAddItem, smartUnits,
+  onShare, isSharedView, existingTitles = [], authUser, onSignIn, onAddToMyRecipes,
 }) {
   const baseServings = parseServingBase(recipe.servingLabel)
   const servingUnit  = parseServingUnit(recipe.servingLabel)
   const [servings, setServings] = useState(baseServings)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [sharedName, setSharedName] = useState(recipe.title)
   const scaleFactor = baseServings > 0 ? servings / baseServings : 1
 
   useEffect(() => {
@@ -18,7 +20,17 @@ export default function RecipeDetail({
     return () => window.removeEventListener('keydown', handleKey)
   }, [onBack])
 
-  const notesParts = recipe.notes ? recipe.notes.split(' | ') : []
+  const notesArr = (() => {
+    const raw = recipe.notes
+    if (!raw || (Array.isArray(raw) && raw.length === 0)) return []
+    if (Array.isArray(raw)) return raw
+    return raw.split(' | ').filter(Boolean).map(part => {
+      const colonIdx = part.indexOf(':')
+      return (colonIdx > 0 && colonIdx < 30)
+        ? { title: part.slice(0, colonIdx).trim(), body: part.slice(colonIdx + 1).trim() }
+        : { title: '', body: part.trim() }
+    })
+  })()
 
   function scaleIng(ing) {
     return { ...ing, amount: scaleAmount(ing.amount, scaleFactor, smartUnits) }
@@ -32,7 +44,23 @@ export default function RecipeDetail({
           <span className="detail-topbar-name">{recipe.title}</span>
         </div>
         <div className="detail-topbar-actions">
-          <button className="action-btn print-btn" onClick={onPrint}>Print</button>
+          <button className="action-btn share-btn action-btn--icon" title="Share recipe" onClick={onShare}>
+            <svg viewBox="0 0 22 22" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="17" cy="5" r="2" />
+              <circle cx="5" cy="11" r="2" />
+              <circle cx="17" cy="17" r="2" />
+              <line x1="7" y1="10" x2="15" y2="6" />
+              <line x1="7" y1="12" x2="15" y2="16" />
+            </svg>
+          </button>
+          <button className="action-btn print-btn action-btn--icon" title="Print recipe" onClick={onPrint}>
+            <svg viewBox="0 0 22 22" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6,8 6,2 16,2 16,8" />
+              <rect x="2" y="8" width="18" height="9" rx="2" />
+              <rect x="6" y="14" width="10" height="6" rx="1" />
+              <circle cx="16" cy="12" r="1" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
           <button className="action-btn list-btn" onClick={() => onAddIngredients(recipe)}>+ List</button>
           <button className="action-btn edit-btn" onClick={onEdit}>Edit</button>
           {recipe.isUserAdded && (
@@ -47,7 +75,11 @@ export default function RecipeDetail({
             <h1 className="detail-title">{recipe.title}</h1>
             <p className="detail-desc">{recipe.description}</p>
             <div className="recipe-tags" style={{ marginTop: 12 }}>
-              {recipe.tags.map(tag => {
+              {[...recipe.tags].sort((a, b) => {
+                const la = allTags.find(t => t.tag === a)?.label ?? a
+                const lb = allTags.find(t => t.tag === b)?.label ?? b
+                return la.localeCompare(lb)
+              }).map(tag => {
                 const def = allTags.find(t => t.tag === tag)
                 if (!def) return null
                 return (
@@ -57,11 +89,17 @@ export default function RecipeDetail({
                 )
               })}
             </div>
+            {recipe.estimatedTime && (
+              <div className="recipe-time-badge" style={{ marginTop: 10 }}>⏱ {recipe.estimatedTime}</div>
+            )}
           </div>
           <div className="detail-stats">
-            {recipe.stats.map((stat, i) => (
-              <div key={i} className={`stat stat-large${stat.colorClass ? ' ' + stat.colorClass : ''}`}>
-                <span className="stat-val">{stat.value}</span>
+            {recipe.stats.filter(s => s.value?.toString().trim()).map((stat, i) => (
+              <div key={i}
+                className={`stat stat-large${!stat.color && stat.colorClass ? ' ' + stat.colorClass : ''}`}
+                style={stat.color ? { background: stat.color.bg } : {}}
+              >
+                <span className="stat-val" style={stat.color ? { color: stat.color.text } : {}}>{stat.value}</span>
                 <span className="stat-label">{stat.label}</span>
               </div>
             ))}
@@ -108,22 +146,50 @@ export default function RecipeDetail({
           </div>
         </div>
 
-        {notesParts.length > 0 && (
+        {notesArr.length > 0 && (
           <div className="notes-box detail-notes">
             <div className="notes-title">Notes & tips</div>
-            <div className="notes-content">
-              {notesParts.map((part, i) => {
-                const colonIdx = part.indexOf(':')
-                if (colonIdx > -1 && colonIdx < 30) {
-                  return (
-                    <span key={i} className="notes-item">
-                      <strong>{part.slice(0, colonIdx)}:</strong>{part.slice(colonIdx + 1)}
-                    </span>
-                  )
-                }
-                return <span key={i} className="notes-item">{part}</span>
-              })}
+            <div className="notes-content notes-structured">
+              {notesArr.map((note, i) => (
+                <div key={i} className="notes-item notes-item-block">
+                  {note.title && <strong>{note.title}: </strong>}
+                  {note.body}
+                </div>
+              ))}
             </div>
+          </div>
+        )}
+
+        {isSharedView && (
+          <div className="shared-recipe-cta">
+            {authUser ? (
+              <>
+                <div className="shared-name-row">
+                  <label className="shared-name-label">Save as</label>
+                  <input
+                    type="text"
+                    className="shared-name-input"
+                    value={sharedName}
+                    onChange={e => setSharedName(e.target.value)}
+                  />
+                </div>
+                {existingTitles.includes(sharedName.trim().toLowerCase()) && (
+                  <p className="shared-name-warning">You already have a recipe with this name.</p>
+                )}
+                <button
+                  className="btn-primary shared-add-btn"
+                  onClick={() => onAddToMyRecipes(sharedName.trim())}
+                  disabled={!sharedName.trim() || existingTitles.includes(sharedName.trim().toLowerCase())}
+                >
+                  Add to my Recipe Box
+                </button>
+              </>
+            ) : (
+              <div className="shared-signin-prompt">
+                <p>Sign in to save this recipe to your collection.</p>
+                <button className="auth-btn" onClick={onSignIn}>Sign in with Google</button>
+              </div>
+            )}
           </div>
         )}
       </div>
