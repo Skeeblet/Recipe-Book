@@ -111,7 +111,7 @@ export default function FilterBar({
   searchQuery, onSearchChange,
   sortBy, onSortChange,
   onAddRecipe, onImportRecipe,
-  groceryCount, onOpenGrocery,
+
   onOpenSettings, onOpenTagSettings,
   authUser, authLoading, onSignIn, onSignOut,
   cardMode, onCardModeChange,
@@ -341,9 +341,7 @@ export default function FilterBar({
           </div>
           <div className="filter-bar-actions">
             <AuthButton user={authUser} authLoading={authLoading} onSignIn={onSignIn} onSignOut={onSignOut} />
-            <button className="grocery-btn" onClick={onOpenGrocery}>
-              Grocery list{groceryCount > 0 ? ` (${groceryCount})` : ''}
-            </button>
+
             <button className="import-recipe-btn" onClick={onImportRecipe}>Import</button>
             <button className="add-recipe-btn" onClick={onAddRecipe}>+ Add Recipe</button>
             <button className="settings-btn" onClick={onOpenSettings} title="Settings">⚙</button>
