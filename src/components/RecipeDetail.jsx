@@ -4,7 +4,7 @@ import ConfirmDialog from './ConfirmDialog.jsx'
 
 export default function RecipeDetail({
   recipe, allTags, onBack, onPrint, onEdit, onDelete, isPrinting,
-  onAddIngredients, onAddItem, smartUnits,
+  onAddIngredients, onAddItem, groceryNames = new Set(), smartUnits,
   onShare, isSharedView, existingTitles = [], authUser, onSignIn, onAddToMyRecipes,
 }) {
   const baseServings = parseServingBase(recipe.servingLabel)
@@ -61,7 +61,18 @@ export default function RecipeDetail({
               <circle cx="16" cy="12" r="1" fill="currentColor" stroke="none" />
             </svg>
           </button>
-          <button className="action-btn list-btn" onClick={() => onAddIngredients(recipe)}>+ List</button>
+          {(() => {
+            const allAdded = recipe.ingredients.length > 0 &&
+              recipe.ingredients.every(ing => groceryNames.has(ing.name.toLowerCase()))
+            return (
+              <button
+                className={`action-btn list-btn${allAdded ? ' list-btn--added' : ''}`}
+                onClick={() => { if (!allAdded) onAddIngredients(recipe) }}
+              >
+                {allAdded ? '✓ List' : '+ List'}
+              </button>
+            )
+          })()}
           <button className="action-btn edit-btn" onClick={onEdit}>Edit</button>
           {recipe.isUserAdded && (
             <button className="action-btn delete-btn" onClick={() => setConfirmDelete(true)}>Delete</button>
@@ -124,10 +135,10 @@ export default function RecipeDetail({
                     <span className="ing-name">{scaled.name}</span>
                     <span className="ing-amount">{scaled.amount}</span>
                     <button
-                      className="ing-add-btn"
-                      title="Add to grocery list"
-                      onClick={() => onAddItem(scaled.name, scaled.amount, recipe.title)}
-                    >+</button>
+                      className={`ing-add-btn${groceryNames.has(scaled.name.toLowerCase()) ? ' ing-add-btn--added' : ''}`}
+                      title={groceryNames.has(scaled.name.toLowerCase()) ? 'In grocery list' : 'Add to grocery list'}
+                      onClick={() => { if (!groceryNames.has(scaled.name.toLowerCase())) onAddItem(scaled.name, scaled.amount, recipe.title) }}
+                    >{groceryNames.has(scaled.name.toLowerCase()) ? '✓' : '+'}</button>
                   </li>
                 )
               })}
