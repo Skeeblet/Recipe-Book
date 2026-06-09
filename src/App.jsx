@@ -11,6 +11,7 @@ import AuthButton from './components/AuthButton.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
 import UpdateToast from './components/UpdateToast.jsx'
 import ShareToast from './components/ShareToast.jsx'
+import GroceryBulkToast from './components/GroceryBulkToast.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import ProfilePage from './components/ProfilePage.jsx'
 import MasonryGrid from './components/MasonryGrid.jsx'
@@ -25,6 +26,7 @@ import { useCardOrder } from './hooks/useCardOrder.js'
 import { useAuth } from './hooks/useAuth.js'
 import { useFirestoreSync } from './hooks/useFirestoreSync.js'
 import { db } from './firebase/config.js'
+import { classifyBatchWithAI } from './utils/ingredientCategories.js'
 import {
   pullAllUserData,
   seedFirestore,
@@ -97,7 +99,7 @@ export default function App() {
   const { updateAvailable, applyUpdate, checkForUpdate } = usePWAUpdate()
   const { recipes, addRecipe, updateRecipe, deleteRecipe, replaceAll: replaceRecipes } = useRecipes()
   const { allTags, customTags, addTag, editTag, deleteTag, replaceAll: replaceTags } = useTags()
-  const { items: groceryItems, addIngredients, addItem, updateItem, toggleItem, removeItem, clearChecked, replaceAll: replaceGrocery } = useGroceryList()
+  const { items: groceryItems, addIngredients, addItem, updateItem, updateItemCategory, toggleItem, removeItem, removeItems, clearChecked, clearAll, replaceAll: replaceGrocery } = useGroceryList()
   const { settings, set: setSetting, replaceAll: replaceSettings } = useSettings()
   const { order: cardOrder, reorder, appendNew, removeId, initOrderExact, replaceAll: replaceCardOrder } = useCardOrder()
   const [conflicts, setConflicts] = useState([])
@@ -169,6 +171,7 @@ export default function App() {
   const [selectedRecipe, setSelectedRecipe] = useState(null)
   const [sharedRecipe, setSharedRecipe] = useState(null)
   const [toastMsg, setToastMsg] = useState(null)
+  const [bulkAddUndo, setBulkAddUndo] = useState(null)
   const deepLinkHandled = useRef(false)
 
   // Push a history entry when detail opens so the browser back button closes it
@@ -182,7 +185,7 @@ export default function App() {
 
   const [printRecipeId, setPrintRecipeId] = useState(null)
   const [formState, setFormState] = useState({ open: false, recipe: null })
-  const [groceryOpen, setGroceryOpen] = useState(false)
+
   const [importOpen, setImportOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [mobileTab, setMobileTab] = useState('recipes')
@@ -316,6 +319,12 @@ export default function App() {
     if (user) idsToDelete.forEach(id => deleteGroceryItemDoc(db, user.uid, id).catch(console.error))
   }
 
+  function handleClearAll() {
+    const idsToDelete = groceryItems.map(i => i.id)
+    clearAll()
+    if (user) idsToDelete.forEach(id => deleteGroceryItemDoc(db, user.uid, id).catch(console.error))
+  }
+
   // Drag handlers
   function handleDragStart(id) {
     // Snapshot current order from the currently displayed order
@@ -356,8 +365,7 @@ export default function App() {
           onSortChange={setSortBy}
           onAddRecipe={() => setFormState({ open: true, recipe: null })}
           onImportRecipe={() => setImportOpen(true)}
-          groceryCount={uncheckedGroceryCount}
-          onOpenGrocery={() => setGroceryOpen(true)}
+
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenTagSettings={() => { setProfileInitialPage('tags'); setMobileTab('profile') }}
           authUser={user}
@@ -422,8 +430,20 @@ export default function App() {
           onPrint={() => handlePrint(selectedRecipe.id)}
           onEdit={() => setFormState({ open: true, recipe: selectedRecipe })}
           onDelete={() => handleDelete(selectedRecipe.id)}
-          onAddIngredients={(recipe) => { addIngredients(recipe); setGroceryOpen(true) }}
-          onAddItem={(name, amount, recipeTitle) => { addItem(name, amount, recipeTitle); setGroceryOpen(true) }}
+          onAddIngredients={(recipe) => {
+            const added = addIngredients(recipe)
+            if (added.length > 0) {
+              setBulkAddUndo({ message: `Added ${added.length} ingredient${added.length !== 1 ? 's' : ''} to list`, ids: added.map(i => i.id) })
+              const unclassified = added.filter(i => i.category === null)
+              if (unclassified.length) {
+                classifyBatchWithAI(unclassified.map(i => i.name), settings).then(map => {
+                  unclassified.forEach(item => { if (map[item.name]) updateItemCategory(item.id, map[item.name]) })
+                })
+              }
+            }
+          }}
+          groceryNames={new Set(groceryItems.map(i => i.name.toLowerCase()))}
+          onAddItem={(name, amount, recipeTitle) => { addItem(name, amount, recipeTitle) }}
           onShare={() => handleShare(selectedRecipe)}
           isSharedView={sharedRecipe != null && sharedRecipe.id === selectedRecipe.id}
           existingTitles={recipes.map(r => r.title.trim().toLowerCase())}
@@ -456,25 +476,23 @@ export default function App() {
         />
       )}
 
-      {groceryOpen && (
+{mobileTab === 'grocery' && (
         <GroceryList
           items={groceryItems}
           onToggle={toggleItem}
           onRemove={handleRemoveGroceryItem}
           onUpdate={updateItem}
           onClearChecked={handleClearChecked}
-          onClose={() => setGroceryOpen(false)}
-        />
-      )}
-
-      {mobileTab === 'grocery' && (
-        <GroceryList
-          items={groceryItems}
-          onToggle={toggleItem}
-          onRemove={handleRemoveGroceryItem}
-          onUpdate={updateItem}
-          onClearChecked={handleClearChecked}
+          onClearAll={handleClearAll}
           isFullPage={true}
+          onAddItem={(name, amount) => {
+            const created = addItem(name, amount, '')
+            if (created?.category === null) {
+              classifyBatchWithAI([created.name], settings).then(map => {
+                if (map[created.name]) updateItemCategory(created.id, map[created.name])
+              })
+            }
+          }}
         />
       )}
 
@@ -530,6 +548,11 @@ export default function App() {
 
       <UpdateToast visible={updateAvailable} onApply={applyUpdate} />
       <ShareToast message={toastMsg} onDismiss={() => setToastMsg(null)} />
+      <GroceryBulkToast
+        info={bulkAddUndo}
+        onUndo={(ids) => { removeItems(ids); setBulkAddUndo(null) }}
+        onDismiss={() => setBulkAddUndo(null)}
+      />
 
       <BottomNav
         activeTab={mobileTab}
