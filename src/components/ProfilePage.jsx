@@ -85,6 +85,16 @@ function ProfileHub({ auth, data, handlers, onNavigate }) {
               <option value="claude-sonnet">Claude Sonnet</option>
             </select>
           </div>
+          <div className="ps-hub-row">
+            <span className="ps-hub-row-label">AI API key</span>
+            <input
+              type="password"
+              className="ps-input"
+              value={settings.aiApiKey || ''}
+              onChange={e => onSettingChange('aiApiKey', e.target.value)}
+              placeholder="Paste API key…"
+            />
+          </div>
 
           {['Recipes', 'Tags', 'Display', 'App info'].map(label => (
             <button

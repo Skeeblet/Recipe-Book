@@ -113,7 +113,8 @@ export function deleteTagDoc(db, uid, tagSlug) {
 // ─── Settings ─────────────────────────────────────────────────────────────────
 
 export function writeSettings(db, uid, settings) {
-  return setDoc(doc(db, 'users', uid, 'settings', 'prefs'), settings)
+  const { aiApiKey, ...safeSettings } = settings
+  return setDoc(doc(db, 'users', uid, 'settings', 'prefs'), safeSettings)
 }
 
 // ─── Card order ───────────────────────────────────────────────────────────────
