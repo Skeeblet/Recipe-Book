@@ -25,19 +25,18 @@ export default function ProfilePage({ auth, data, handlers, pwa, initialPage, on
 
   const subProps = { auth, data, handlers, pwa, onBack: () => window.history.back() }
 
+  if (activePage === 'account') return <AccountPage {...subProps} />
   if (activePage === 'recipes') return <RecipesPage {...subProps} />
   if (activePage === 'tags')    return <TagsPage    {...subProps} />
   if (activePage === 'display') return <DisplayPage {...subProps} />
   if (activePage === 'appinfo') return <AppInfoPage {...subProps} />
 
-  return <ProfileHub auth={auth} data={data} handlers={handlers} onNavigate={setActivePage} />
+  return <ProfileHub auth={auth} onNavigate={setActivePage} />
 }
 
 /* ── Hub ─────────────────────────────────────────────────────────── */
-function ProfileHub({ auth, data, handlers, onNavigate }) {
+function ProfileHub({ auth, onNavigate }) {
   const { user, authLoading, onSignIn, onSignOut, onDeleteAccount } = auth
-  const { settings } = data
-  const { onSettingChange } = handlers
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   return (
@@ -74,29 +73,7 @@ function ProfileHub({ auth, data, handlers, onNavigate }) {
         <div className="ps-hub-group-label">Settings</div>
 
         <div className="ps-hub-rows">
-          <div className="ps-hub-row">
-            <span className="ps-hub-row-label">AI import model</span>
-            <select
-              className="ps-select"
-              value={settings.aiModel || 'gemini-1.5-flash'}
-              onChange={e => onSettingChange('aiModel', e.target.value)}
-            >
-              <option value="gemini-1.5-flash">Gemini 1.5 Flash (free)</option>
-              <option value="claude-sonnet">Claude Sonnet</option>
-            </select>
-          </div>
-          <div className="ps-hub-row">
-            <span className="ps-hub-row-label">AI API key</span>
-            <input
-              type="password"
-              className="ps-input"
-              value={settings.aiApiKey || ''}
-              onChange={e => onSettingChange('aiApiKey', e.target.value)}
-              placeholder="Paste API key…"
-            />
-          </div>
-
-          {['Recipes', 'Tags', 'Display', 'App info'].map(label => (
+          {['Account', 'Recipes', 'Tags', 'Display', 'App info'].map(label => (
             <button
               key={label}
               className="ps-hub-nav-btn"
@@ -145,6 +122,57 @@ function SubPage({ title, onBack, children }) {
         {children}
       </div>
     </div>
+  )
+}
+
+/* ── Account sub-page ────────────────────────────────────────────── */
+function AccountPage({ data, handlers, onBack }) {
+  const { settings } = data
+  const { onSettingChange } = handlers
+  const isClaude = settings.aiModel === 'claude-sonnet'
+
+  return (
+    <SubPage title="Account" onBack={onBack}>
+      <div className="ps-rows">
+        <div className="ps-row ps-row--stacked">
+          <div className="ps-row-main">
+            <span className="ps-label">AI import model</span>
+            <select
+              className="ps-select"
+              value={settings.aiModel || 'gemini-1.5-flash'}
+              onChange={e => onSettingChange('aiModel', e.target.value)}
+            >
+              <option value="gemini-1.5-flash">Gemini 1.5 Flash (free)</option>
+              <option value="claude-sonnet">Claude Sonnet</option>
+            </select>
+          </div>
+          <a
+            className="ps-key-link"
+            href={isClaude ? 'https://console.anthropic.com/settings/keys' : 'https://aistudio.google.com/apikey'}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {isClaude
+              ? 'Get a Claude API key at console.anthropic.com ↗'
+              : 'Get a free Gemini API key at aistudio.google.com ↗'}
+          </a>
+        </div>
+
+        <div className="ps-row">
+          <div className="ps-row-label">
+            <span className="ps-label">AI API key</span>
+            <span className="ps-desc">Used for recipe import and ingredient sorting. Stays on this device.</span>
+          </div>
+          <input
+            type="password"
+            className="ps-input"
+            value={settings.aiApiKey || ''}
+            onChange={e => onSettingChange('aiApiKey', e.target.value)}
+            placeholder="Paste API key…"
+          />
+        </div>
+      </div>
+    </SubPage>
   )
 }
 
