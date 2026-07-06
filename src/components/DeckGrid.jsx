@@ -126,7 +126,9 @@ export default function DeckGrid({ recipes, allTags, onOpenRecipe, initialActive
 
   function detectActive() {
     const container = containerRef.current
-    if (!container) return
+    // No layout while display:none — every offsetTop reads 0 and the first
+    // card would wrongly win.
+    if (!container || container.offsetWidth === 0) return
     const snapPos = container.scrollTop + ACTIVE_OFFSET
     let bestId = null, bestDist = Infinity
     for (const [id, el] of Object.entries(cardRefs.current)) {
@@ -154,6 +156,10 @@ export default function DeckGrid({ recipes, allTags, onOpenRecipe, initialActive
     const container = containerRef.current
     if (!container) return
     function onScroll() {
+      // Hiding the container (display:none on tab switch) clamps the scroll
+      // offset to 0 and fires a scroll event — ignore it, or it clobbers the
+      // saved position and active card we restore from when re-shown.
+      if (container.offsetWidth === 0) return
       savedScrollRef.current = container.scrollTop
       detectActive()
     }
