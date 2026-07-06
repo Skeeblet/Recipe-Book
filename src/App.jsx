@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Cover from './components/Cover.jsx'
 import FilterBar from './components/FilterBar.jsx'
 import RecipeCard from './components/RecipeCard.jsx'
@@ -173,6 +173,7 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState(null)
   const [bulkAddUndo, setBulkAddUndo] = useState(null)
   const deepLinkHandled = useRef(false)
+  const deckActiveIdRef = useRef(null)
 
   // Push a history entry when detail opens so the browser back button closes it
   useEffect(() => {
@@ -206,7 +207,7 @@ export default function App() {
     setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   }
 
-  function matchesFilters(recipe) {
+  const matchesFilters = useCallback((recipe) => {
     const matchesTag = activeTags.length === 0 || activeTags.every(t => recipe.tags.includes(t))
     if (!matchesTag) return false
     if (!searchQuery.trim()) return true
@@ -216,9 +217,12 @@ export default function App() {
       recipe.description.toLowerCase().includes(q) ||
       recipe.ingredients.some(ing => ing.name.toLowerCase().includes(q))
     )
-  }
+  }, [activeTags, searchQuery])
 
-  const filteredRecipes = sortRecipes(recipes.filter(matchesFilters), sortBy, cardOrder)
+  const filteredRecipes = useMemo(
+    () => sortRecipes(recipes.filter(matchesFilters), sortBy, cardOrder),
+    [recipes, matchesFilters, sortBy, cardOrder]
+  )
 
   function handlePrint(recipeId) {
     setPrintRecipeId(recipeId)
@@ -393,6 +397,9 @@ export default function App() {
             recipes={filteredRecipes}
             allTags={allTags}
             onOpenRecipe={setSelectedRecipe}
+            initialActiveId={deckActiveIdRef.current}
+            onActiveChange={id => { deckActiveIdRef.current = id }}
+            isVisible={mobileTab === 'recipes'}
           />
         ) : (
           <>
