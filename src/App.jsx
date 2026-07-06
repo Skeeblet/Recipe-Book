@@ -17,6 +17,7 @@ import ProfilePage from './components/ProfilePage.jsx'
 import MasonryGrid from './components/MasonryGrid.jsx'
 import DeckGrid from './components/DeckGrid.jsx'
 import RecipeListEnd from './components/RecipeListEnd.jsx'
+import WelcomeState from './components/WelcomeState.jsx'
 import { usePWAUpdate } from './hooks/usePWAUpdate.js'
 import { useRecipes } from './hooks/useRecipes.js'
 import { useTags } from './hooks/useTags.js'
@@ -412,7 +413,14 @@ export default function App() {
         />
       )}
       <div className={`recipes-container${mobileTab !== 'recipes' ? ' hide-mobile' : ''}`}>
-        {filteredRecipes.length === 0 ? (
+        {recipes.length === 0 ? (
+          <WelcomeState
+            onCreateFirst={() => setImportState({ open: true, method: null, prefill: '' })}
+            authUser={user}
+            authLoading={authLoading}
+            onSignIn={signIn}
+          />
+        ) : filteredRecipes.length === 0 ? (
           <div className="empty-state visible">No recipes match that filter.</div>
         ) : settings.cardMode === 'compact' ? (
           <>

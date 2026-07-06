@@ -188,6 +188,34 @@ html[data-theme="dark"] .recipe-card { box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 .delete-btn:hover { background: #FAE8E8; }
 
 /* Empty state */
+/* First-run welcome */
+.welcome-state {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 56px 24px 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.welcome-icon { width: 52px; height: 52px; color: var(--brown-light); margin-bottom: 18px; }
+.welcome-icon svg { width: 100%; height: 100%; }
+.welcome-title { font-family: 'Playfair Display', serif; font-size: 1.75rem; color: var(--brown-dark); margin-bottom: 10px; }
+.welcome-sub { font-size: 0.9375rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+.welcome-cta { font-size: 0.9375rem !important; padding: 11px 26px !important; }
+.welcome-signin {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.welcome-signin-text { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.6; margin: 0; }
+.welcome-signin .auth-btn { font-size: 0.8125rem; padding: 8px 20px; }
+.welcome-signin .auth-btn:disabled { opacity: 0.5; cursor: default; }
+
 .empty-state { display: none; }
 .empty-state.visible {
   display: block;
