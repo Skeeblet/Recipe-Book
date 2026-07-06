@@ -24,6 +24,10 @@ const STAT_COLORS = {
 }
 const DEFAULT_STAT_COLOR = { bg: '#F2E4D8', text: '#D4622A' }
 
+export function statColorFor(label) {
+  return STAT_COLORS[String(label || '').trim().toLowerCase()] || DEFAULT_STAT_COLOR
+}
+
 // Single funnel for AI output, Schema.org output, and pasted JSON.
 // Returns the app recipe shape (tags left as raw strings — resolve at
 // confirm time via resolveTags). Throws user-readable Errors.

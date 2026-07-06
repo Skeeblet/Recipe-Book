@@ -488,6 +488,16 @@ export default function App() {
           authUser={user}
           onSignIn={signIn}
           onAddToMyRecipes={handleAddSharedRecipe}
+          settings={settings}
+          onApplyAIUpdate={patch => {
+            updateRecipe(selectedRecipe.id, patch)
+            setSelectedRecipe(r => (r ? { ...r, ...patch } : r))
+          }}
+          onOpenAccount={() => {
+            setSelectedRecipe(null)
+            setProfileInitialPage('account')
+            setMobileTab('profile')
+          }}
         />
       )}
 

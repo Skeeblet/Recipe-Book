@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react'
 import { scaleAmount, parseServingBase, parseServingUnit } from '../utils/scaleAmount.js'
 import ConfirmDialog from './ConfirmDialog.jsx'
+import AIToolsModal from './AIToolsModal.jsx'
 
 export default function RecipeDetail({
   recipe, allTags, onBack, onPrint, onEdit, onDelete, isPrinting,
   onAddIngredients, onAddItem, groceryNames = new Set(), smartUnits,
   onShare, isSharedView, existingTitles = [], authUser, onSignIn, onAddToMyRecipes,
+  settings, onApplyAIUpdate, onOpenAccount,
 }) {
   const baseServings = parseServingBase(recipe.servingLabel)
   const servingUnit  = parseServingUnit(recipe.servingLabel)
   const [servings, setServings] = useState(baseServings)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [sharedName, setSharedName] = useState(recipe.title)
+  const [aiMode, setAiMode] = useState(null) // null | 'optimize' | 'nutrition'
   const scaleFactor = baseServings > 0 ? servings / baseServings : 1
 
   useEffect(() => {
@@ -117,6 +120,17 @@ export default function RecipeDetail({
           </div>
         </div>
 
+        {!isSharedView && (
+          <div className="detail-ai-row">
+            <button className="ai-tool-btn" onClick={() => setAiMode('optimize')}>
+              <SparkleIcon /> Optimize ingredients
+            </button>
+            <button className="ai-tool-btn" onClick={() => setAiMode('nutrition')}>
+              <ScaleIcon /> Nutrition check
+            </button>
+          </div>
+        )}
+
         <div className="detail-body">
           <div className="detail-col">
             <div className="section-title serving-title-row">
@@ -213,6 +227,37 @@ export default function RecipeDetail({
           centered
         />
       )}
+
+      {aiMode && (
+        <AIToolsModal
+          mode={aiMode}
+          recipe={recipe}
+          settings={settings}
+          onApply={patch => { onApplyAIUpdate(patch); setAiMode(null) }}
+          onClose={() => setAiMode(null)}
+          onOpenAccount={() => { setAiMode(null); onOpenAccount() }}
+        />
+      )}
     </div>
+  )
+}
+
+function SparkleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" />
+      <path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z" />
+    </svg>
+  )
+}
+
+function ScaleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 20h18" />
+      <path d="M12 4v3" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+      <circle cx="12" cy="4" r="1.5" />
+    </svg>
   )
 }
