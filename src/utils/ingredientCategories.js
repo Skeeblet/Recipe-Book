@@ -1,3 +1,5 @@
+import { callAI } from './aiClient.js'
+
 const CATEGORIES = ['Produce', 'Dairy', 'Meat', 'Seafood', 'Bakery', 'Frozen', 'Pantry', 'Spices', 'Beverages', 'Other']
 
 const INGREDIENT_MAP = {
@@ -169,45 +171,13 @@ export function lookupCategory(name) {
 
 export async function classifyBatchWithAI(names, settings) {
   if (!names || names.length === 0) return {}
-  const { aiModel, aiApiKey } = settings || {}
-  if (!aiApiKey) return {}
+  if (!settings?.aiApiKey) return {}
 
   const prompt = `Classify each of these ingredients into exactly one of: Produce, Dairy, Meat, Seafood, Bakery, Frozen, Pantry, Spices, Beverages, Other.\nIngredients: ${names.join(', ')}\nReply with JSON only: {"ingredient name": "Category", ...}`
 
+  // Fire-and-forget classification: any failure just leaves items uncategorized.
   try {
-    let responseText
-    if (aiModel === 'claude-sonnet') {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': aiApiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-5',
-          max_tokens: 512,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      })
-      if (!res.ok) return {}
-      const data = await res.json()
-      responseText = data.content?.[0]?.text || ''
-    } else {
-      // Default: Gemini 1.5 Flash
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${aiApiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-        }
-      )
-      if (!res.ok) return {}
-      const data = await res.json()
-      responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    }
+    const responseText = await callAI(prompt, settings)
 
     // Extract JSON from response (may be wrapped in markdown code block)
     const jsonMatch = responseText.match(/\{[\s\S]*\}/)
