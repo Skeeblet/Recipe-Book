@@ -214,7 +214,7 @@ export default function FilterBar({
           <button className="mobile-icon-btn" onClick={cycleView} aria-label="Switch view">
             <ViewIcon />
           </button>
-          <button className="mobile-icon-btn" onClick={onAddRecipe} aria-label="Add recipe">
+          <button className="mobile-icon-btn" onClick={onImportRecipe} aria-label="Add or import recipe">
             <PlusIcon />
           </button>
         </div>

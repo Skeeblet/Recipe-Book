@@ -5,7 +5,7 @@ import RecipeCard from './components/RecipeCard.jsx'
 import RecipeDetail from './components/RecipeDetail.jsx'
 import RecipeForm from './components/RecipeForm.jsx'
 import GroceryList from './components/GroceryList.jsx'
-import ImportRecipeModal from './components/ImportRecipeModal.jsx'
+import ImportModal from './components/ImportModal.jsx'
 import Settings from './components/Settings.jsx'
 import AuthButton from './components/AuthButton.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
@@ -173,6 +173,7 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState(null)
   const [bulkAddUndo, setBulkAddUndo] = useState(null)
   const deepLinkHandled = useRef(false)
+  const shareHandled = useRef(false)
   const deckActiveIdRef = useRef(null)
 
   // Push a history entry when detail opens so the browser back button closes it
@@ -187,7 +188,7 @@ export default function App() {
   const [printRecipeId, setPrintRecipeId] = useState(null)
   const [formState, setFormState] = useState({ open: false, recipe: null })
 
-  const [importOpen, setImportOpen] = useState(false)
+  const [importState, setImportState] = useState({ open: false, method: null, prefill: '' })
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [mobileTab, setMobileTab] = useState('recipes')
   const [profileInitialPage, setProfileInitialPage] = useState(null)
@@ -233,7 +234,7 @@ export default function App() {
   }
 
   function handleFormSubmit(data) {
-    if (formState.recipe) {
+    if (formState.recipe?.id) {
       updateRecipe(formState.recipe.id, data)
       setSelectedRecipe(r => r ? { ...r, ...data } : r)
     } else {
@@ -245,11 +246,15 @@ export default function App() {
     setSettingsOpen(false)
   }
 
+  function closeImport() {
+    setImportState({ open: false, method: null, prefill: '' })
+  }
+
   function handleImport(data) {
     const id = 'user-' + Date.now()
     addRecipe({ ...data, id })
     appendNew(id)
-    setImportOpen(false)
+    closeImport()
   }
 
   function handleConflictResolve(recipe, action) {
@@ -304,6 +309,32 @@ export default function App() {
       if (pub) { setSharedRecipe(pub); setSelectedRecipe(pub) }
     }).catch(console.error)
   }, [authLoading, recipes]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Android share target: PWA opened via /?url=…&text=…&title=… from a share sheet
+  useEffect(() => {
+    if (authLoading || shareHandled.current) return
+    shareHandled.current = true
+
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('recipe')) return // recipe deep link owns this URL
+    const sharedText = params.get('url') || params.get('text') || ''
+    if (!sharedText) return
+
+    window.history.replaceState({}, '', window.location.pathname)
+
+    // Shares often embed the URL mid-sentence in `text` — strip trailing punctuation
+    const urlMatch = sharedText.match(/https?:\/\/\S+/)
+    const sharedUrl = params.get('url') || (urlMatch ? urlMatch[0].replace(/[.,;:)\]}>]+$/, '') : null)
+
+    if (sharedUrl) {
+      let method = 'website'
+      if (/youtube\.com|youtu\.be/.test(sharedUrl)) method = 'youtube'
+      else if (/instagram\.com|instagr\.am|tiktok\.com/.test(sharedUrl)) method = 'social'
+      setImportState({ open: true, method, prefill: sharedUrl })
+    } else {
+      setImportState({ open: true, method: 'text', prefill: sharedText })
+    }
+  }, [authLoading])
 
   function handleDelete(id) {
     deleteRecipe(id)
@@ -368,7 +399,7 @@ export default function App() {
           sortBy={sortBy}
           onSortChange={setSortBy}
           onAddRecipe={() => setFormState({ open: true, recipe: null })}
-          onImportRecipe={() => setImportOpen(true)}
+          onImportRecipe={() => setImportState({ open: true, method: null, prefill: '' })}
 
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenTagSettings={() => { setProfileInitialPage('tags'); setMobileTab('profile') }}
@@ -540,12 +571,28 @@ export default function App() {
         />
       )}
 
-      {importOpen && (
-        <ImportRecipeModal
+      {importState.open && (
+        <ImportModal
           allTags={allTags}
           onAddTag={addTag}
           onImport={handleImport}
-          onClose={() => setImportOpen(false)}
+          onEditFirst={draft => {
+            closeImport()
+            setFormState({ open: true, recipe: draft })
+          }}
+          onCreateManually={() => {
+            closeImport()
+            setFormState({ open: true, recipe: null })
+          }}
+          onOpenAccount={() => {
+            closeImport()
+            setProfileInitialPage('account')
+            setMobileTab('profile')
+          }}
+          settings={settings}
+          onClose={closeImport}
+          initialMethod={importState.method}
+          prefill={importState.prefill}
         />
       )}
 

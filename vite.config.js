@@ -23,6 +23,11 @@ export default defineConfig({
         name: 'My Recipe Box',
         short_name: 'Recipe Box',
         start_url: '/Recipe-Book/',
+        share_target: {
+          action: '/Recipe-Book/',
+          method: 'GET',
+          params: { title: 'title', text: 'text', url: 'url' },
+        },
         display: 'standalone',
         background_color: '#FAF7F2',
         theme_color: '#D4622A',

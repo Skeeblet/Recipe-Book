@@ -180,7 +180,7 @@ export default function RecipeForm({ recipe, allTags, onAddTag, onSubmit, onClos
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="modal-header">
-          <h2>{recipe ? 'Edit Recipe' : 'Add Recipe'}</h2>
+          <h2>{recipe?.id ? 'Edit Recipe' : 'Add Recipe'}</h2>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -431,7 +431,7 @@ export default function RecipeForm({ recipe, allTags, onAddTag, onSubmit, onClos
           </div>
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-primary">{recipe ? 'Save changes' : 'Add recipe'}</button>
+            <button type="submit" className="btn-primary">{recipe?.id ? 'Save changes' : 'Add recipe'}</button>
           </div>
         </form>
       </div>
