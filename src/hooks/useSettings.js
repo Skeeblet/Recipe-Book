@@ -24,9 +24,13 @@ export function useSettings() {
   }
 
   function replaceAll(cloudSettings) {
-    const merged = { ...DEFAULTS, ...cloudSettings }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
-    setSettings(merged)
+    setSettings(prev => {
+      // The AI API key is device-local (stripped before cloud writes) — a cloud
+      // pull must never blank it out.
+      const merged = { ...DEFAULTS, ...cloudSettings, aiApiKey: prev.aiApiKey || '' }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
+      return merged
+    })
   }
 
   return { settings, set, replaceAll }

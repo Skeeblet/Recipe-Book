@@ -38,6 +38,7 @@ import {
   deleteAllUserData,
   fetchPublicRecipe,
   writePublicRecipe,
+  writeDeletions,
 } from './firebase/firestoreAdapter.js'
 import { shareRecipe } from './utils/shareRecipe.js'
 
@@ -104,8 +105,11 @@ export default function App() {
   const { settings, set: setSetting, replaceAll: replaceSettings } = useSettings()
   const { order: cardOrder, reorder, appendNew, removeId, initOrderExact, replaceAll: replaceCardOrder } = useCardOrder()
   const [conflicts, setConflicts] = useState([])
+  // Blocks cloud writes until the initial pull/merge finishes, so boot-time
+  // local state can't be bulk-written over fresher cloud data.
+  const [syncReady, setSyncReady] = useState(false)
 
-  useFirestoreSync(user?.uid ?? null, { recipes, groceryItems, customTags, settings, cardOrder })
+  useFirestoreSync(user?.uid ?? null, syncReady, { recipes, groceryItems, customTags, settings, cardOrder })
 
   // Apply theme and font-size to document root
   useEffect(() => {
@@ -119,6 +123,17 @@ export default function App() {
     document.documentElement.setAttribute('data-fontsize', settings.fontSize || 'medium')
   }, [settings.fontSize])
 
+  async function handleSignOut() {
+    await signOut()
+    // Account data must not linger on the device (it's safe in the cloud, and
+    // a different account signing in here must not inherit it). Device prefs
+    // ('app-settings', incl. the local AI key) stay.
+    ;['user-recipes', 'custom-tags', 'grocery-list', 'card-order'].forEach(k =>
+      localStorage.removeItem(k)
+    )
+    window.location.reload()
+  }
+
   async function handleDeleteAccount() {
     if (user) await deleteAllUserData(db, user.uid).catch(console.error)
     await signOut()
@@ -128,41 +143,62 @@ export default function App() {
     window.location.reload()
   }
 
-  // Sign-in merge: seed on first sign-in, or merge cloud data with local
+  // Sign-in merge: seed on first sign-in, or merge cloud data with local.
+  // Deletion tombstones (users/{uid}/meta/deletions) distinguish recipes
+  // deleted on another device from recipes created locally while offline.
   useEffect(() => {
+    setSyncReady(false)
     if (authLoading || !user) return
     pullAllUserData(db, user.uid).then(data => {
+      const tombRecipes = data.deletions?.recipes || {}
+      const tombGrocery = data.deletions?.grocery || {}
+      const hasTombstones =
+        Object.keys(tombRecipes).length > 0 || Object.keys(tombGrocery).length > 0
       const hasCloudData = data.recipes?.length || data.groceryList?.length || data.tags?.length
 
-      if (!hasCloudData) {
+      // Seed only on a genuinely fresh account — tombstones mean the account
+      // has been used before (possibly emptied on purpose), so don't re-seed.
+      if (!hasCloudData && !hasTombstones) {
         seedFirestore(db, user.uid, {
           recipes: recipes.filter(r => r.isUserAdded),
           groceryList: groceryItems,
           tags: customTags,
           settings,
           cardOrder,
-        }).catch(console.error)
+        }).then(() => setSyncReady(true)).catch(console.error)
         return
       }
 
-      const cloudIds = new Set((data.recipes || []).map(r => r.id))
-      const localOnly = recipes.filter(r => r.isUserAdded && !cloudIds.has(r.id))
+      // Drop tombstoned recipes even if their cloud doc lingers (e.g. the doc
+      // delete was lost mid-flight), and clean those docs up in the background.
+      const cloudRecipes = (data.recipes || []).filter(r => {
+        if (!tombRecipes[String(r.id)]) return true
+        deleteRecipeDoc(db, user.uid, r.id).catch(console.error)
+        return false
+      })
 
-      replaceRecipes([
-        ...recipes.filter(r => !r.isUserAdded),
-        ...(data.recipes || []),
-      ])
+      const cloudIds = new Set(cloudRecipes.map(r => r.id))
+      const localOnly = recipes.filter(
+        r => r.isUserAdded && !cloudIds.has(r.id) && !tombRecipes[String(r.id)]
+      )
 
-      if (data.groceryList?.length) {
-        const localIds = new Set(groceryItems.map(i => String(i.id)))
-        const cloudOnly = data.groceryList.filter(i => !localIds.has(String(i.id)))
-        if (cloudOnly.length) replaceGrocery([...groceryItems, ...cloudOnly])
+      replaceRecipes(cloudRecipes)
+
+      // Grocery: keep local items unless deleted elsewhere; add cloud-only ones.
+      const localGroceryIds = new Set(groceryItems.map(i => String(i.id)))
+      const keptLocal = groceryItems.filter(i => !tombGrocery[String(i.id)])
+      const cloudOnly = (data.groceryList || []).filter(
+        i => !localGroceryIds.has(String(i.id)) && !tombGrocery[String(i.id)]
+      )
+      if (keptLocal.length !== groceryItems.length || cloudOnly.length) {
+        replaceGrocery([...keptLocal, ...cloudOnly])
       }
 
       if (data.tags?.length) replaceTags(data.tags)
       if (data.settings) replaceSettings(data.settings)
       if (data.cardOrder) replaceCardOrder(data.cardOrder)
       if (localOnly.length) setConflicts(localOnly)
+      setSyncReady(true)
     }).catch(console.error)
   }, [user?.uid, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -260,6 +296,9 @@ export default function App() {
 
   function handleConflictResolve(recipe, action) {
     if (action === 'keep') {
+      // The cloud replace dropped this local-only recipe — restore it locally
+      // as well as writing it back to the cloud.
+      addRecipe(recipe)
       writeRecipe(db, user.uid, recipe).catch(console.error)
     } else {
       deleteRecipe(recipe.id)
@@ -341,24 +380,36 @@ export default function App() {
     deleteRecipe(id)
     removeId(id)
     if (selectedRecipe?.id === id) window.history.back()  // popstate listener closes detail
-    if (user) deleteRecipeDoc(db, user.uid, id).catch(console.error)
+    if (user) {
+      // Tombstone first: even if the doc delete is lost, the merge drops it.
+      writeDeletions(db, user.uid, 'recipes', [id])
+        .then(() => deleteRecipeDoc(db, user.uid, id))
+        .catch(console.error)
+    }
+  }
+
+  function syncGroceryDeletions(ids) {
+    if (!user || ids.length === 0) return
+    writeDeletions(db, user.uid, 'grocery', ids)
+      .then(() => Promise.all(ids.map(id => deleteGroceryItemDoc(db, user.uid, id))))
+      .catch(console.error)
   }
 
   function handleRemoveGroceryItem(id) {
     removeItem(id)
-    if (user) deleteGroceryItemDoc(db, user.uid, id).catch(console.error)
+    syncGroceryDeletions([id])
   }
 
   function handleClearChecked() {
     const idsToDelete = groceryItems.filter(i => i.checked).map(i => i.id)
     clearChecked()
-    if (user) idsToDelete.forEach(id => deleteGroceryItemDoc(db, user.uid, id).catch(console.error))
+    syncGroceryDeletions(idsToDelete)
   }
 
   function handleClearAll() {
     const idsToDelete = groceryItems.map(i => i.id)
     clearAll()
-    if (user) idsToDelete.forEach(id => deleteGroceryItemDoc(db, user.uid, id).catch(console.error))
+    syncGroceryDeletions(idsToDelete)
   }
 
   // Drag handlers
@@ -407,7 +458,7 @@ export default function App() {
           authUser={user}
           authLoading={authLoading}
           onSignIn={signIn}
-          onSignOut={signOut}
+          onSignOut={handleSignOut}
           cardMode={settings.cardMode}
           onCardModeChange={mode => setSetting('cardMode', mode)}
         />
@@ -556,7 +607,7 @@ export default function App() {
         <ProfilePage
           initialPage={profileInitialPage}
           onInitialPageConsumed={() => setProfileInitialPage(null)}
-          auth={{ user, authLoading, onSignIn: signIn, onSignOut: signOut, onDeleteAccount: handleDeleteAccount }}
+          auth={{ user, authLoading, onSignIn: signIn, onSignOut: handleSignOut, onDeleteAccount: handleDeleteAccount }}
           data={{ recipes, allTags, customTags, settings }}
           handlers={{
             onSettingChange: setSetting,
@@ -622,7 +673,7 @@ export default function App() {
       <ShareToast message={toastMsg} onDismiss={() => setToastMsg(null)} />
       <GroceryBulkToast
         info={bulkAddUndo}
-        onUndo={(ids) => { removeItems(ids); setBulkAddUndo(null) }}
+        onUndo={(ids) => { removeItems(ids); syncGroceryDeletions(ids); setBulkAddUndo(null) }}
         onDismiss={() => setBulkAddUndo(null)}
       />
 

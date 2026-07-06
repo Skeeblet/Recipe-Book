@@ -8,7 +8,10 @@ import {
   writeCardOrder,
 } from '../firebase/firestoreAdapter.js'
 
-export function useFirestoreSync(uid, { recipes, groceryItems, customTags, settings, cardOrder }) {
+// `ready` must stay false until the initial cloud pull/merge has completed —
+// otherwise the boot-time state (stale localStorage) gets bulk-written to the
+// cloud and resurrects recipes deleted on other devices.
+export function useFirestoreSync(uid, ready, { recipes, groceryItems, customTags, settings, cardOrder }) {
   const timers = useRef({})
   const dataRef = useRef({})
   const dirtyRecipes = useRef(new Set())
@@ -25,8 +28,14 @@ export function useFirestoreSync(uid, { recipes, groceryItems, customTags, setti
     timers.current[key] = setTimeout(fn, delay)
   }
 
+  // Cancel a pending write when the uid changes (sign-out/switch) or on
+  // unmount — a stale closure must not write to the cloud after the fact.
+  function cancelOnCleanup(key) {
+    return () => clearTimeout(timers.current[key])
+  }
+
   useEffect(() => {
-    if (!uid) return
+    if (!uid || !ready) return
     debounce('recipes', () => {
       if (!navigator.onLine) {
         recipes.filter(r => r.isUserAdded).forEach(r => dirtyRecipes.current.add(r.id))
@@ -35,13 +44,14 @@ export function useFirestoreSync(uid, { recipes, groceryItems, customTags, setti
       recipes.filter(r => r.isUserAdded).forEach(r =>
         writeRecipe(db, uid, r)
           .then(() => dirtyRecipes.current.delete(r.id))
-          .catch(console.error)
+          .catch(err => { console.error(err); dirtyRecipes.current.add(r.id) })
       )
     }, 1500)
-  }, [uid, recipes]) // eslint-disable-line react-hooks/exhaustive-deps
+    return cancelOnCleanup('recipes')
+  }, [uid, ready, recipes]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!uid) return
+    if (!uid || !ready) return
     debounce('grocery', () => {
       if (!navigator.onLine) {
         groceryItems.forEach(i => dirtyGrocery.current.add(i.id))
@@ -50,13 +60,14 @@ export function useFirestoreSync(uid, { recipes, groceryItems, customTags, setti
       groceryItems.forEach(i =>
         writeGroceryItem(db, uid, i)
           .then(() => dirtyGrocery.current.delete(i.id))
-          .catch(console.error)
+          .catch(err => { console.error(err); dirtyGrocery.current.add(i.id) })
       )
     }, 1500)
-  }, [uid, groceryItems]) // eslint-disable-line react-hooks/exhaustive-deps
+    return cancelOnCleanup('grocery')
+  }, [uid, ready, groceryItems]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!uid) return
+    if (!uid || !ready) return
     debounce('tags', () => {
       if (!navigator.onLine) {
         customTags.forEach(t => dirtyTags.current.add(t.tag))
@@ -65,34 +76,37 @@ export function useFirestoreSync(uid, { recipes, groceryItems, customTags, setti
       customTags.forEach(t =>
         writeTag(db, uid, t)
           .then(() => dirtyTags.current.delete(t.tag))
-          .catch(console.error)
+          .catch(err => { console.error(err); dirtyTags.current.add(t.tag) })
       )
     }, 1500)
-  }, [uid, customTags]) // eslint-disable-line react-hooks/exhaustive-deps
+    return cancelOnCleanup('tags')
+  }, [uid, ready, customTags]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!uid) return
+    if (!uid || !ready) return
     debounce('settings', () => {
       if (!navigator.onLine) { dirtySettings.current = true; return }
       writeSettings(db, uid, settings)
         .then(() => { dirtySettings.current = false })
-        .catch(console.error)
+        .catch(err => { console.error(err); dirtySettings.current = true })
     }, 800)
-  }, [uid, settings]) // eslint-disable-line react-hooks/exhaustive-deps
+    return cancelOnCleanup('settings')
+  }, [uid, ready, settings]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!uid) return
+    if (!uid || !ready) return
     debounce('cardOrder', () => {
       if (!navigator.onLine) { dirtyCardOrder.current = true; return }
       writeCardOrder(db, uid, cardOrder)
         .then(() => { dirtyCardOrder.current = false })
-        .catch(console.error)
+        .catch(err => { console.error(err); dirtyCardOrder.current = true })
     }, 800)
-  }, [uid, cardOrder]) // eslint-disable-line react-hooks/exhaustive-deps
+    return cancelOnCleanup('cardOrder')
+  }, [uid, ready, cardOrder]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Online recovery — registered once per uid, reads current data via dataRef
   useEffect(() => {
-    if (!uid) return
+    if (!uid || !ready) return
     function handleOnline() {
       const { recipes, groceryItems, customTags, settings, cardOrder } = dataRef.current
       const dirtyR = recipes.filter(r => r.isUserAdded && dirtyRecipes.current.has(r.id))
@@ -120,5 +134,5 @@ export function useFirestoreSync(uid, { recipes, groceryItems, customTags, setti
     }
     window.addEventListener('online', handleOnline)
     return () => window.removeEventListener('online', handleOnline)
-  }, [uid]) // uid only — data read via dataRef, no re-registration on state changes
+  }, [uid, ready]) // data read via dataRef, no re-registration on state changes
 }

@@ -110,6 +110,18 @@ export function deleteTagDoc(db, uid, tagSlug) {
   return deleteDoc(doc(db, 'users', uid, 'customTags', tagSlug))
 }
 
+// ─── Deletion tombstones ──────────────────────────────────────────────────────
+// users/{uid}/meta/deletions holds { recipes: {id: ts}, grocery: {id: ts} } so
+// other devices can tell "deleted elsewhere" apart from "created here offline".
+// Ids are Date.now()-based and never reused, so tombstones are permanent.
+
+export function writeDeletions(db, uid, kind, ids) {
+  const now = Date.now()
+  const stamped = {}
+  for (const id of ids) stamped[String(id)] = now
+  return setDoc(doc(db, 'users', uid, 'meta', 'deletions'), { [kind]: stamped }, { merge: true })
+}
+
 // ─── Settings ─────────────────────────────────────────────────────────────────
 
 export function writeSettings(db, uid, settings) {
@@ -136,6 +148,7 @@ export async function deleteAllUserData(db, uid) {
 
   deletions.push(deleteDoc(doc(db, 'users', uid, 'settings', 'prefs')))
   deletions.push(deleteDoc(doc(db, 'users', uid, 'cardOrder', 'order')))
+  deletions.push(deleteDoc(doc(db, 'users', uid, 'meta', 'deletions')))
 
   await Promise.all(deletions)
 }
@@ -143,12 +156,13 @@ export async function deleteAllUserData(db, uid) {
 // ─── Pull all user data ───────────────────────────────────────────────────────
 
 export async function pullAllUserData(db, uid) {
-  const [recipesSnap, grocerySnap, tagsSnap, settingsSnap, cardOrderSnap] = await Promise.all([
+  const [recipesSnap, grocerySnap, tagsSnap, settingsSnap, cardOrderSnap, deletionsSnap] = await Promise.all([
     getDocs(collection(db, 'users', uid, 'recipes')),
     getDocs(collection(db, 'users', uid, 'groceryList')),
     getDocs(collection(db, 'users', uid, 'customTags')),
     getDoc(doc(db, 'users', uid, 'settings', 'prefs')),
     getDoc(doc(db, 'users', uid, 'cardOrder', 'order')),
+    getDoc(doc(db, 'users', uid, 'meta', 'deletions')),
   ])
 
   const recipes = recipesSnap.docs.map(d => d.data())
@@ -163,7 +177,13 @@ export async function pullAllUserData(db, uid) {
   const cardOrderDoc = cardOrderSnap.exists() ? cardOrderSnap.data() : null
   const cardOrder = cardOrderDoc?.ids ?? null
 
-  return { recipes, groceryList, tags, settings, cardOrder }
+  const deletionsDoc = deletionsSnap.exists() ? deletionsSnap.data() : null
+  const deletions = {
+    recipes: deletionsDoc?.recipes || {},
+    grocery: deletionsDoc?.grocery || {},
+  }
+
+  return { recipes, groceryList, tags, settings, cardOrder, deletions }
 }
 
 // ─── Seed (first-ever sign-in) ────────────────────────────────────────────────
@@ -186,7 +206,9 @@ export async function seedFirestore(db, uid, { recipes, groceryList, tags, setti
     items.push({ ref: doc(db, 'users', uid, 'customTags', tag.tag), data: tag })
   }
   if (settings) {
-    items.push({ ref: doc(db, 'users', uid, 'settings', 'prefs'), data: settings })
+    // The AI API key is device-local — never write it to the cloud
+    const { aiApiKey, ...safeSettings } = settings
+    items.push({ ref: doc(db, 'users', uid, 'settings', 'prefs'), data: safeSettings })
   }
   if (cardOrder) {
     items.push({ ref: doc(db, 'users', uid, 'cardOrder', 'order'), data: { ids: cardOrder } })
