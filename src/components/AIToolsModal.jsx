@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { callAI, extractJson, MissingApiKeyError } from '../utils/aiClient.js'
 import {
   buildOptimizePrompt,
@@ -86,7 +87,10 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
     ? diffIngredients(recipe.ingredients, result.ingredients)
     : null
 
-  return (
+  // Portal to document.body: this renders inside RecipeDetail's fixed overlay,
+  // whose stacking context (z-index 150) would otherwise trap the sheet below
+  // the bottom nav (also 150, later in the DOM) — hiding the footer buttons.
+  return createPortal(
     <div
       className="modal-overlay modal-overlay--sheet"
       onClick={e => e.target === e.currentTarget && handleClose()}
@@ -245,7 +249,8 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
