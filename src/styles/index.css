@@ -441,8 +441,14 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 /* Bottom sheet on mobile */
 @media (max-width: 768px) {
   .modal-overlay--sheet { align-items: flex-end; padding: 0; overflow-y: hidden; }
-  .modal-overlay--sheet .modal--sheet { border-radius: 16px 16px 0 0; max-width: none; max-height: 88vh; display: flex; flex-direction: column; animation: sheet-up 0.25s ease; }
-  .modal-overlay--sheet .modal-body { max-height: none; flex: 1; }
+  /* dvh tracks the browser's dynamic URL bar so the sheet never extends below
+     the visible viewport (88vh is the fallback for older browsers) */
+  .modal-overlay--sheet .modal--sheet { border-radius: 16px 16px 0 0; max-width: none; max-height: 88vh; max-height: 88dvh; display: flex; flex-direction: column; animation: sheet-up 0.25s ease; }
+  /* min-height: 0 lets the body shrink and scroll instead of pushing the
+     footer buttons out of the clipped sheet */
+  .modal-overlay--sheet .modal-body { max-height: none; flex: 1; min-height: 0; }
+  .modal-overlay--sheet .modal-header { flex-shrink: 0; }
+  .modal-overlay--sheet .modal-footer { flex-shrink: 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
   .import-picker-grid { grid-template-columns: repeat(2, 1fr); }
   .import-review-actions { flex-direction: column-reverse; }
   .import-review-actions button { width: 100%; }
