@@ -817,6 +817,7 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 .ps-row-main { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .ps-key-link { font-size: 0.75rem; color: var(--brown-mid); text-decoration: underline; text-underline-offset: 2px; }
 .ps-key-link:hover { color: var(--brown-dark); }
+.ps-model-warning { font-size: 0.75rem; color: #B5860D; background: #FDF6E3; border: 1px solid #E8D9A8; border-radius: 6px; padding: 7px 10px; line-height: 1.5; }
 .ps-value { font-size: 0.875rem; color: var(--text-muted); }
 
 /* Segmented control */

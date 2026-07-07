@@ -156,6 +156,13 @@ function AccountPage({ data, handlers, onBack }) {
               ? 'Get a Claude API key at console.anthropic.com ↗'
               : 'Get a free Gemini API key at aistudio.google.com ↗'}
           </a>
+          {!isClaude && (
+            <span className="ps-model-warning">
+              ⚠ Google retires Gemini 2.5 Flash on October 16, 2026. AI features will
+              need an app update around then — if imports stop working, check for a
+              new version.
+            </span>
+          )}
         </div>
 
         <div className="ps-row">
