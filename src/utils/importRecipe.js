@@ -144,14 +144,14 @@ export function isSocialUrl(url) {
   }
 }
 
-const SCHEMA_INSTRUCTIONS = `Return ONLY valid JSON matching this exact schema — no markdown, no code fences, no preamble, no explanation:
+const SCHEMA_BLOCK = `Return ONLY valid JSON matching this exact schema — no markdown, no code fences, no preamble, no explanation:
 {
   "title": "string (required)",
   "description": "one or two sentence summary",
   "category": "one of: Breakfast, Lunch & Dinner, Sauces, Snacks, Desserts",
   "estimatedTime": "total time like \\"30 min\\" or \\"1 hr 15 min\\"",
   "servingLabel": "yield like \\"Makes 4 servings\\"",
-  "tags": ["short lowercase slugs like \\"quick\\", \\"high-protein\\", \\"low-cal\\", \\"meal-prep\\""],
+  "tags": ["existing tag slugs only — see tag rule below"],
   "ingredients": [{ "name": "string", "amount": "string like \\"2 cups\\"" }],
   "steps": ["one string per step"],
   "notes": [{ "title": "string", "body": "string" }],
@@ -159,27 +159,36 @@ const SCHEMA_INSTRUCTIONS = `Return ONLY valid JSON matching this exact schema �
 }
 All fields are optional except "title" and "ingredients". Omit fields you cannot determine — do not invent them.`
 
-export function buildWebsitePrompt(pageText) {
-  return `Extract the recipe from this web page text.\n\n${SCHEMA_INSTRUCTIONS}\n\nWeb page text:\n${pageText}`
+// AI-suggested tags are restricted to the user's existing tags — the app never
+// creates tags from AI output, so anything else would be silently dropped.
+function schemaInstructions(existingTags = []) {
+  const tagRule = existingTags.length
+    ? `Tag rule: for "tags", choose ONLY from the user's existing tags that genuinely fit (or omit the field): ${existingTags.join(', ')}. Never invent new tags.`
+    : 'Tag rule: omit the "tags" field.'
+  return `${SCHEMA_BLOCK}\n${tagRule}`
 }
 
-export function buildTextPrompt(text) {
-  return `Extract and structure the recipe from the following text.\n\n${SCHEMA_INSTRUCTIONS}\n\nText:\n${text}`
+export function buildWebsitePrompt(pageText, existingTags = []) {
+  return `Extract the recipe from this web page text.\n\n${schemaInstructions(existingTags)}\n\nWeb page text:\n${pageText}`
 }
 
-export function buildPhotoPrompt() {
+export function buildTextPrompt(text, existingTags = []) {
+  return `Extract and structure the recipe from the following text.\n\n${schemaInstructions(existingTags)}\n\nText:\n${text}`
+}
+
+export function buildPhotoPrompt(existingTags = []) {
   return `This is a photo of a recipe. Extract the complete recipe.
 
-${SCHEMA_INSTRUCTIONS}
+${schemaInstructions(existingTags)}
 
 If you cannot read a complete recipe from this image, return {"error": true, "message": "Could not read recipe from image"} instead.`
 }
 
-export function buildYouTubePrompt(title, description, transcript) {
+export function buildYouTubePrompt(title, description, transcript, existingTags = []) {
   const parts = [
     'Extract the recipe from this cooking video.',
     '',
-    SCHEMA_INSTRUCTIONS,
+    schemaInstructions(existingTags),
     '',
     `Video title: ${title || '(unknown)'}`,
     `Video description:\n${description || '(none)'}`,
@@ -192,23 +201,23 @@ export function buildYouTubePrompt(title, description, transcript) {
   return parts.join('\n')
 }
 
-export function buildSocialPrompt(url, content) {
+export function buildSocialPrompt(url, content, existingTags = []) {
   return `The user wants to import a recipe from this social media URL: ${url}
 Here is whatever content was retrievable from the page (may be empty or incomplete due to platform restrictions):
 ${content || '(nothing retrievable)'}
 
 If you can identify a recipe from the URL, the content, or your knowledge of this creator or video, extract it.
 
-${SCHEMA_INSTRUCTIONS}
+${schemaInstructions(existingTags)}
 
 If you cannot identify a specific recipe, return {"error": true, "message": "Could not extract recipe. Try copying the caption and using Text import instead."} instead.`
 }
 
-export function buildGeneratePrompt(description) {
+export function buildGeneratePrompt(description, existingTags = []) {
   return `Create a complete recipe for: ${description}
 Use realistic ingredient amounts, practical step-by-step instructions, and include a calorie estimate in "stats" (label "Cal").
 
-${SCHEMA_INSTRUCTIONS}`
+${schemaInstructions(existingTags)}`
 }
 
 export const JSON_TEMPLATE = JSON.stringify({

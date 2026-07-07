@@ -188,6 +188,7 @@ export default function ImportModal({
   const prefillRef = useRef(prefill)
 
   const hasApiKey = !!settings?.aiApiKey
+  const existingTagSlugs = allTags.map(t => t.tag)
 
   // Revoke the preview object URL whenever it's replaced or on unmount
   useEffect(() => {
@@ -266,23 +267,23 @@ export default function ImportModal({
     }
     setLoadingMsg('Asking AI to read the page…')
     const pageText = htmlToText(html, 12000)
-    const json = extractJson(await callAI(buildWebsitePrompt(pageText), settings, null, signal))
+    const json = extractJson(await callAI(buildWebsitePrompt(pageText, existingTagSlugs), settings, null, signal))
     return normalizeImportedRecipe(json)
   }
 
   async function importText(text, signal) {
-    const json = extractJson(await callAI(buildTextPrompt(text), settings, null, signal))
+    const json = extractJson(await callAI(buildTextPrompt(text, existingTagSlugs), settings, null, signal))
     return normalizeImportedRecipe(json)
   }
 
   async function importGenerate(description, signal) {
-    const json = extractJson(await callAI(buildGeneratePrompt(description), settings, null, signal))
+    const json = extractJson(await callAI(buildGeneratePrompt(description, existingTagSlugs), settings, null, signal))
     return normalizeImportedRecipe(json)
   }
 
   async function importPhoto(signal) {
     const base64 = await fileToResizedBase64(photoFile)
-    const json = extractJson(await callAI(buildPhotoPrompt(), settings, base64, signal))
+    const json = extractJson(await callAI(buildPhotoPrompt(existingTagSlugs), settings, base64, signal))
     if (json.error) {
       throw new Error("Couldn't read a recipe from that photo. Try a clearer image or use text import instead.")
     }
@@ -299,7 +300,7 @@ export default function ImportModal({
       )
     }
     setLoadingMsg('Asking AI to extract the recipe…')
-    const prompt = buildYouTubePrompt(title, description, transcript.slice(0, 8000))
+    const prompt = buildYouTubePrompt(title, description, transcript.slice(0, 8000), existingTagSlugs)
     const json = extractJson(await callAI(prompt, settings, null, signal))
     return normalizeImportedRecipe(json)
   }
@@ -313,7 +314,7 @@ export default function ImportModal({
     } catch (e) {
       if (e.name === 'AbortError') throw e
     }
-    const json = extractJson(await callAI(buildSocialPrompt(url, content), settings, null, signal))
+    const json = extractJson(await callAI(buildSocialPrompt(url, content, existingTagSlugs), settings, null, signal))
     if (json.error) {
       const message = json.message || 'Could not extract recipe.'
       throw new Error(`${message} Tip: Copy the caption or description from the post and use Text import — it works every time.`)
@@ -408,8 +409,9 @@ export default function ImportModal({
   }
 
   function finalizeDraft() {
-    // Website keywords are noisy scraped data — match existing tags only.
-    const addFn = method === 'website' ? null : onAddTag
+    // AI-suggested and scraped tags may only match existing tags, never create
+    // new ones. JSON import is user-authored data, so unknown tags are created.
+    const addFn = method === 'json' ? onAddTag : null
     return { ...draft, tags: resolveTags(draft.tags, allTags, addFn) }
   }
 
