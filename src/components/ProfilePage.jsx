@@ -139,10 +139,10 @@ function AccountPage({ data, handlers, onBack }) {
             <span className="ps-label">AI import model</span>
             <select
               className="ps-select"
-              value={settings.aiModel || 'gemini-1.5-flash'}
+              value={settings.aiModel || 'gemini-2.5-flash'}
               onChange={e => onSettingChange('aiModel', e.target.value)}
             >
-              <option value="gemini-1.5-flash">Gemini 1.5 Flash (free)</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (free)</option>
               <option value="claude-sonnet">Claude Sonnet</option>
             </select>
           </div>

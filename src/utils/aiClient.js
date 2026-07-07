@@ -38,20 +38,21 @@ export async function callAI(prompt, settings, imageBase64 = null, signal = null
         signal,
       })
     } else {
-      // Default: Gemini 1.5 Flash. New-format AI Studio keys (AQ. prefix) use
-      // Bearer auth; legacy AIza keys keep the ?key= query parameter.
-      const isNewKeyFormat = aiApiKey.startsWith('AQ.')
+      // Default: Gemini. The x-goog-api-key header authenticates both legacy
+      // AIza keys and new AQ. keys — do NOT use Authorization: Bearer, which
+      // Google treats as an OAuth access token and rejects with 401.
+      // gemini-1.5-flash was retired (404s); 2.5-flash is the current model.
       const parts = [{ text: prompt }]
       if (imageBase64) {
         parts.push({ inline_data: { mime_type: 'image/jpeg', data: imageBase64 } })
       }
       res = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent${isNewKeyFormat ? '' : `?key=${aiApiKey}`}`,
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(isNewKeyFormat && { Authorization: `Bearer ${aiApiKey}` }),
+            'x-goog-api-key': aiApiKey,
           },
           body: JSON.stringify({ contents: [{ parts }] }),
           signal,
