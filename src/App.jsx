@@ -41,6 +41,8 @@ import {
   writeDeletions,
 } from './firebase/firestoreAdapter.js'
 import { shareRecipe } from './utils/shareRecipe.js'
+import { callAI, extractJson } from './utils/aiClient.js'
+import { buildNutritionPrompt, parseNutritionResponse, mergeStats, normalizeStatLabel } from './utils/recipeAI.js'
 
 function parseTimeToMinutes(str) {
   if (!str) return Infinity
@@ -276,8 +278,10 @@ export default function App() {
       setSelectedRecipe(r => r ? { ...r, ...data } : r)
     } else {
       const id = 'user-' + Date.now()
-      addRecipe({ ...data, id })
+      const newRecipe = { ...data, id }
+      addRecipe(newRecipe)
       appendNew(id)
+      maybeAutoNutrition(newRecipe)
     }
     setFormState({ open: false, recipe: null })
     setSettingsOpen(false)
@@ -287,11 +291,34 @@ export default function App() {
     setImportState({ open: false, method: null, prefill: '' })
   }
 
+  // Fire-and-forget: newly added recipes with no core nutrition stats get an
+  // AI estimate in the background (Account setting, on by default). Failures
+  // are silent — the recipe simply keeps its empty stats.
+  function maybeAutoNutrition(recipe) {
+    if (!settings.autoNutrition || !settings.aiApiKey) return
+    if (!recipe.ingredients?.length) return
+    const CORE = ['cal', 'protein', 'fiber', 'fat']
+    const hasCoreStat = (recipe.stats || []).some(
+      s => CORE.includes(normalizeStatLabel(s.label)) && String(s.value ?? '').trim()
+    )
+    if (hasCoreStat) return
+    callAI(buildNutritionPrompt(recipe), settings)
+      .then(text => {
+        const merged = mergeStats(recipe.stats || [], parseNutritionResponse(extractJson(text)))
+        updateRecipe(recipe.id, { stats: merged })
+        setSelectedRecipe(r => (r && r.id === recipe.id ? { ...r, stats: merged } : r))
+        showToast('Nutrition estimated with AI')
+      })
+      .catch(() => {})
+  }
+
   function handleImport(data) {
     const id = 'user-' + Date.now()
-    addRecipe({ ...data, id })
+    const newRecipe = { ...data, id }
+    addRecipe(newRecipe)
     appendNew(id)
     closeImport()
+    maybeAutoNutrition(newRecipe)
   }
 
   function handleConflictResolve(recipe, action) {
@@ -322,11 +349,13 @@ export default function App() {
   function handleAddSharedRecipe(name) {
     if (!sharedRecipe) return
     const id = 'user-' + Date.now()
-    addRecipe({ ...sharedRecipe, id, title: name || sharedRecipe.title, isUserAdded: true })
+    const newRecipe = { ...sharedRecipe, id, title: name || sharedRecipe.title, isUserAdded: true }
+    addRecipe(newRecipe)
     appendNew(id)
     setSharedRecipe(null)
     setSelectedRecipe(null)
     showToast('Added to your recipes!')
+    maybeAutoNutrition(newRecipe)
   }
 
   // Deep link: open recipe from ?recipe=id query param

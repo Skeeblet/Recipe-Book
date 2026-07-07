@@ -167,6 +167,19 @@ function AccountPage({ data, handlers, onBack }) {
 
         <div className="ps-row">
           <div className="ps-row-label">
+            <span className="ps-label">Auto nutrition check</span>
+            <span className="ps-desc">Estimate calories, protein, fiber, and fat with AI when a new recipe has none.</span>
+          </div>
+          <button
+            className={`toggle-btn${settings.autoNutrition ? ' on' : ''}`}
+            onClick={() => onSettingChange('autoNutrition', !settings.autoNutrition)}
+            role="switch" aria-checked={settings.autoNutrition}>
+            <span className="toggle-knob" />
+          </button>
+        </div>
+
+        <div className="ps-row">
+          <div className="ps-row-label">
             <span className="ps-label">AI API key</span>
             <span className="ps-desc">Used for recipe import and ingredient sorting. Stays on this device.</span>
           </div>

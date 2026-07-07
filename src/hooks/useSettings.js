@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 const STORAGE_KEY = 'app-settings'
-const DEFAULTS = { smartUnits: true, cardMode: 'deck', aiModel: 'gemini-2.5-flash', aiApiKey: '', fontSize: 'medium', theme: 'system' }
+const DEFAULTS = { smartUnits: true, cardMode: 'deck', aiModel: 'gemini-2.5-flash', aiApiKey: '', autoNutrition: true, fontSize: 'medium', theme: 'system' }
 
 // Settings saved (locally or in the cloud) before a model retirement may
 // reference dead model ids — map them forward.
