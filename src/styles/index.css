@@ -413,7 +413,9 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 .import-photo-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
 /* AI tools (recipe detail) */
-.detail-ai-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0 4px; }
+/* Negative top margin pulls the row toward the hero's fixed 36px underline
+   gap; the larger bottom margin separates it from the Ingredients section. */
+.detail-ai-row { display: flex; gap: 10px; flex-wrap: wrap; margin: -16px 0 28px; }
 .ai-tool-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; background: transparent; color: var(--brown-mid); border: 1.5px solid var(--border); border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
 .ai-tool-btn:hover { border-color: var(--brown-light); background: var(--card-bg); }
 .ai-tool-btn svg { flex-shrink: 0; }
