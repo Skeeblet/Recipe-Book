@@ -155,9 +155,15 @@ const SCHEMA_BLOCK = `Return ONLY valid JSON matching this exact schema — no m
   "ingredients": [{ "name": "string", "amount": "string like \\"2 cups\\"" }],
   "steps": ["one string per step"],
   "notes": [{ "title": "string", "body": "string" }],
-  "stats": [{ "label": "Cal", "value": "string" }]
+  "stats": [
+    { "label": "Cal", "value": "420" },
+    { "label": "Protein", "value": "32g" },
+    { "label": "Fiber", "value": "6g" },
+    { "label": "Fat", "value": "12g" }
+  ]
 }
-All fields are optional except "title" and "ingredients". Omit fields you cannot determine — do not invent them.`
+For "stats", include per-serving Cal, Protein, Fiber, and Fat whenever they are stated or can be reasonably estimated from the ingredients.
+All other fields are optional except "title" and "ingredients". Omit fields you cannot determine — do not invent them.`
 
 // AI-suggested tags are restricted to the user's existing tags — the app never
 // creates tags from AI output, so anything else would be silently dropped.
@@ -215,7 +221,7 @@ If you cannot identify a specific recipe, return {"error": true, "message": "Cou
 
 export function buildGeneratePrompt(description, existingTags = []) {
   return `Create a complete recipe for: ${description}
-Use realistic ingredient amounts, practical step-by-step instructions, and include a calorie estimate in "stats" (label "Cal").
+Use realistic ingredient amounts and practical step-by-step instructions. Estimate per-serving nutrition from the ingredient amounts and include ALL FOUR stats: Cal, Protein, Fiber, and Fat.
 
 ${schemaInstructions(existingTags)}`
 }
