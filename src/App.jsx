@@ -581,9 +581,9 @@ export default function App() {
             updateRecipe(selectedRecipe.id, patch)
             setSelectedRecipe(r => (r ? { ...r, ...patch } : r))
           }}
-          onOpenAccount={() => {
+          onOpenAISettings={() => {
             setSelectedRecipe(null)
-            setProfileInitialPage('account')
+            setProfileInitialPage('ai')
             setMobileTab('profile')
           }}
         />
@@ -682,9 +682,9 @@ export default function App() {
             closeImport()
             setFormState({ open: true, recipe: null })
           }}
-          onOpenAccount={() => {
+          onOpenAISettings={() => {
             closeImport()
-            setProfileInitialPage('account')
+            setProfileInitialPage('ai')
             setMobileTab('profile')
           }}
           settings={settings}

@@ -14,11 +14,11 @@ import {
 const GOALS = ['Lower carb', 'Higher protein', 'Keto', 'Vegan', 'Vegetarian', 'Low calorie', 'Gluten-free']
 
 const API_KEY_MSG =
-  'Add your Gemini API key in Profile → Account to use this feature. ' +
+  'Add your Gemini API key in Profile → AI to use this feature. ' +
   'Gemini has a free tier — get a key at aistudio.google.com.'
 
 // mode: 'optimize' | 'nutrition'
-export default function AIToolsModal({ mode, recipe, settings, onApply, onClose, onOpenAccount }) {
+export default function AIToolsModal({ mode, recipe, settings, onApply, onClose, onOpenAISettings }) {
   const isOptimize = mode === 'optimize'
   const [step, setStep] = useState(isOptimize ? 'goal' : 'loading') // goal | loading | review | error
   const [goal, setGoal] = useState(null)
@@ -141,9 +141,9 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
                   <button
                     type="button"
                     className="btn-secondary btn-sm import-key-note-btn"
-                    onClick={onOpenAccount}
+                    onClick={onOpenAISettings}
                   >
-                    Open Account settings
+                    Open AI settings
                   </button>
                 </div>
               )}
@@ -177,9 +177,9 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
                   <button
                     type="button"
                     className="btn-secondary btn-sm import-key-note-btn"
-                    onClick={onOpenAccount}
+                    onClick={onOpenAISettings}
                   >
-                    Open Account settings
+                    Open AI settings
                   </button>
                 </div>
               ) : (

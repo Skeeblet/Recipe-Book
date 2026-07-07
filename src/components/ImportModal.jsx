@@ -155,7 +155,7 @@ async function fileToResizedBase64(file) {
 }
 
 const API_KEY_MSG =
-  'Add your Gemini API key in Profile → Account to use this feature. ' +
+  'Add your Gemini API key in Profile → AI to use this feature. ' +
   'Gemini has a free tier — get a key at aistudio.google.com.'
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -166,7 +166,7 @@ export default function ImportModal({
   onImport,
   onEditFirst,
   onCreateManually,
-  onOpenAccount,
+  onOpenAISettings,
   settings,
   onClose,
   initialMethod = null,
@@ -228,7 +228,7 @@ export default function ImportModal({
     userInteractedRef.current = true
     if (!m.enabled) return
     if (m.requiresKey && !hasApiKey) {
-      onOpenAccount()
+      onOpenAISettings()
       return
     }
     if (m.key === 'manual') {
@@ -649,9 +649,9 @@ export default function ImportModal({
                   <button
                     type="button"
                     className="btn-secondary btn-sm import-key-note-btn"
-                    onClick={onOpenAccount}
+                    onClick={onOpenAISettings}
                   >
-                    Open Account settings
+                    Open AI settings
                   </button>
                 </div>
               )}

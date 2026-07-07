@@ -25,7 +25,7 @@ export default function ProfilePage({ auth, data, handlers, pwa, initialPage, on
 
   const subProps = { auth, data, handlers, pwa, onBack: () => window.history.back() }
 
-  if (activePage === 'account') return <AccountPage {...subProps} />
+  if (activePage === 'ai') return <AIPage {...subProps} />
   if (activePage === 'recipes') return <RecipesPage {...subProps} />
   if (activePage === 'tags')    return <TagsPage    {...subProps} />
   if (activePage === 'display') return <DisplayPage {...subProps} />
@@ -73,7 +73,7 @@ function ProfileHub({ auth, onNavigate }) {
         <div className="ps-hub-group-label">Settings</div>
 
         <div className="ps-hub-rows">
-          {['Account', 'Recipes', 'Tags', 'Display', 'App info'].map(label => (
+          {['AI', 'Recipes', 'Tags', 'Display', 'App info'].map(label => (
             <button
               key={label}
               className="ps-hub-nav-btn"
@@ -125,18 +125,19 @@ function SubPage({ title, onBack, children }) {
   )
 }
 
-/* ── Account sub-page ────────────────────────────────────────────── */
-function AccountPage({ data, handlers, onBack }) {
+/* ── AI sub-page ─────────────────────────────────────────────────── */
+function AIPage({ data, handlers, onBack }) {
   const { settings } = data
   const { onSettingChange } = handlers
   const isClaude = settings.aiModel === 'claude-sonnet'
 
   return (
-    <SubPage title="Account" onBack={onBack}>
+    <SubPage title="AI" onBack={onBack}>
+      <div className="ps-section-label">Setup</div>
       <div className="ps-rows">
         <div className="ps-row ps-row--stacked">
           <div className="ps-row-main">
-            <span className="ps-label">AI import model</span>
+            <span className="ps-label">AI model</span>
             <select
               className="ps-select"
               value={settings.aiModel || 'gemini-2.5-flash'}
@@ -167,20 +168,7 @@ function AccountPage({ data, handlers, onBack }) {
 
         <div className="ps-row">
           <div className="ps-row-label">
-            <span className="ps-label">Auto nutrition check</span>
-            <span className="ps-desc">Estimate calories, protein, fiber, and fat with AI when a new recipe has none.</span>
-          </div>
-          <button
-            className={`toggle-btn${settings.autoNutrition ? ' on' : ''}`}
-            onClick={() => onSettingChange('autoNutrition', !settings.autoNutrition)}
-            role="switch" aria-checked={settings.autoNutrition}>
-            <span className="toggle-knob" />
-          </button>
-        </div>
-
-        <div className="ps-row">
-          <div className="ps-row-label">
-            <span className="ps-label">AI API key</span>
+            <span className="ps-label">API key</span>
             <span className="ps-desc">Used for recipe import and ingredient sorting. Stays on this device.</span>
           </div>
           <input
@@ -190,6 +178,22 @@ function AccountPage({ data, handlers, onBack }) {
             onChange={e => onSettingChange('aiApiKey', e.target.value)}
             placeholder="Paste API key…"
           />
+        </div>
+      </div>
+
+      <div className="ps-section-label">AI settings</div>
+      <div className="ps-rows">
+        <div className="ps-row">
+          <div className="ps-row-label">
+            <span className="ps-label">Auto nutrition check</span>
+            <span className="ps-desc">Estimate calories, protein, fiber, and fat with AI when a new recipe has none.</span>
+          </div>
+          <button
+            className={`toggle-btn${settings.autoNutrition ? ' on' : ''}`}
+            onClick={() => onSettingChange('autoNutrition', !settings.autoNutrition)}
+            role="switch" aria-checked={settings.autoNutrition}>
+            <span className="toggle-knob" />
+          </button>
         </div>
       </div>
     </SubPage>

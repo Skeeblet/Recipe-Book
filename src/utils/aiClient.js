@@ -1,6 +1,6 @@
 export class MissingApiKeyError extends Error {
   constructor() {
-    super('Add your Gemini API key in Profile → Account to use this feature. Gemini has a free tier — get a key at aistudio.google.com.')
+    super('Add your Gemini API key in Profile → AI to use this feature. Gemini has a free tier — get a key at aistudio.google.com.')
     this.name = 'MissingApiKeyError'
   }
 }
@@ -66,7 +66,7 @@ export async function callAI(prompt, settings, imageBase64 = null, signal = null
 
   if (!res.ok) {
     if (res.status === 401 || res.status === 403) {
-      throw new Error("Your API key doesn't seem to be valid — check Profile → Account.")
+      throw new Error("Your API key doesn't seem to be valid — check Profile → AI.")
     }
     if (res.status === 429) {
       throw new Error('The AI service is rate-limiting — wait a minute and try again.')

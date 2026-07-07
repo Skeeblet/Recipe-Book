@@ -7,7 +7,7 @@ export default function RecipeDetail({
   recipe, allTags, onBack, onPrint, onEdit, onDelete, isPrinting,
   onAddIngredients, onAddItem, groceryNames = new Set(), smartUnits,
   onShare, isSharedView, existingTitles = [], authUser, onSignIn, onAddToMyRecipes,
-  settings, onApplyAIUpdate, onOpenAccount,
+  settings, onApplyAIUpdate, onOpenAISettings,
 }) {
   const baseServings = parseServingBase(recipe.servingLabel)
   const servingUnit  = parseServingUnit(recipe.servingLabel)
@@ -235,7 +235,7 @@ export default function RecipeDetail({
           settings={settings}
           onApply={patch => { onApplyAIUpdate(patch); setAiMode(null) }}
           onClose={() => setAiMode(null)}
-          onOpenAccount={() => { setAiMode(null); onOpenAccount() }}
+          onOpenAISettings={() => { setAiMode(null); onOpenAISettings() }}
         />
       )}
     </div>
