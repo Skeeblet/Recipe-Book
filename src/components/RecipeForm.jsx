@@ -47,18 +47,42 @@ const LEGACY_STAT_COLORS = {
   'yellow': { bg: '#FDF6E3', text: '#B5860D' },
 }
 
+const DEFAULT_STATS = [
+  { value: '', label: 'Cal',     color: { bg: '#F2E4D8', text: '#D4622A' } },
+  { value: '', label: 'Protein', color: { bg: '#EDE6F7', text: '#7B5EA7' } },
+  { value: '', label: 'Fiber',   color: { bg: '#EAF0E8', text: '#4A6741' } },
+  { value: '', label: 'Fat',     color: { bg: '#FDF6E3', text: '#B5860D' } },
+]
+
+function defaultStats() {
+  return DEFAULT_STATS.map(s => ({ ...s, color: { ...s.color } }))
+}
+
+// The stat rows have no add/remove controls — the form relies on the preset
+// rows always being present. Recipes with missing or partial stats (imports,
+// AI drafts) get the absent presets appended as blank rows so nutrition is
+// always editable; blank rows are filtered back out on submit.
+function statsToForm(recipeStats = []) {
+  const mapped = recipeStats.map(s => ({
+    value: s.value,
+    label: s.label,
+    color: s.color || LEGACY_STAT_COLORS[s.colorClass || ''] || LEGACY_STAT_COLORS[''],
+  }))
+  const norm = l => {
+    const lower = String(l || '').trim().toLowerCase()
+    return lower === 'calories' ? 'cal' : lower
+  }
+  const missing = defaultStats().filter(d => !mapped.some(m => norm(m.label) === norm(d.label)))
+  return [...mapped, ...missing]
+}
+
 function emptyForm() {
   return {
     title: '',
     description: '',
     tags: [],
     servingLabel: '1 serving',
-    stats: [
-      { value: '', label: 'Cal',     color: { bg: '#F2E4D8', text: '#D4622A' } },
-      { value: '', label: 'Protein', color: { bg: '#EDE6F7', text: '#7B5EA7' } },
-      { value: '', label: 'Fiber',   color: { bg: '#EAF0E8', text: '#4A6741' } },
-      { value: '', label: 'Fat',     color: { bg: '#FDF6E3', text: '#B5860D' } },
-    ],
+    stats: defaultStats(),
     ingredients: [{ name: '', amount: '' }],
     steps: [''],
     notes: [{ title: '', body: '' }],
@@ -73,11 +97,7 @@ function recipeToForm(recipe) {
     category:    recipe.category,
     tags:        [...recipe.tags],
     servingLabel: recipe.servingLabel,
-    stats:       recipe.stats.map(s => ({
-      value: s.value,
-      label: s.label,
-      color: s.color || LEGACY_STAT_COLORS[s.colorClass || ''] || LEGACY_STAT_COLORS[''],
-    })),
+    stats:       statsToForm(recipe.stats),
     ingredients: recipe.ingredients.map(i => ({ ...i })),
     steps:       [...recipe.steps],
     notes:       parseNotesToArray(recipe.notes),
@@ -165,6 +185,7 @@ export default function RecipeForm({ recipe, allTags, onAddTag, onSubmit, onClos
 
     onSubmit({
       ...form,
+      stats:         form.stats.filter(s => String(s.value ?? '').trim()),
       ingredients:   validIngredients,
       steps:         validSteps,
       notes:         form.notes.filter(n => n.title.trim() || n.body.trim()),
