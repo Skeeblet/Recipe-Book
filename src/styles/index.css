@@ -411,6 +411,11 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 /* Photo import */
 .import-photo-preview { max-width: 100%; max-height: 260px; border-radius: 10px; border: 1.5px solid var(--border); object-fit: contain; align-self: flex-start; }
 .import-photo-row { display: flex; gap: 10px; flex-wrap: wrap; }
+/* capture="environment" is meaningless on desktop — camera button is mobile-only */
+.import-camera-label { display: none; }
+@media (max-width: 768px) {
+  .import-camera-label { display: inline-block; }
+}
 
 /* AI tools (recipe detail) */
 /* Negative top margin pulls the row toward the hero's fixed 36px underline

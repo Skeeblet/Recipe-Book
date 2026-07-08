@@ -415,6 +415,16 @@ export default function ImportModal({
     return { ...draft, tags: resolveTags(draft.tags, allTags, addFn) }
   }
 
+  function handlePhotoSelected(e) {
+    userInteractedRef.current = true
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+    setError('')
+  }
+
   function handleFile(e) {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -515,24 +525,29 @@ export default function ImportModal({
                     <img className="import-photo-preview" src={photoPreview} alt="Selected recipe" />
                   )}
                   <div className="import-photo-row">
+                    {/* No capture attribute: gallery/file picker. The capture
+                        variant below forces the camera — having it on this
+                        input would block gallery access on Android. */}
                     <input
                       type="file"
                       id="import-photo-file"
                       className="import-file-input"
                       accept="image/jpeg,image/png,image/webp,image/gif"
-                      capture="environment"
-                      onChange={e => {
-                        userInteractedRef.current = true
-                        const file = e.target.files?.[0]
-                        e.target.value = ''
-                        if (!file) return
-                        setPhotoFile(file)
-                        setPhotoPreview(URL.createObjectURL(file))
-                        setError('')
-                      }}
+                      onChange={handlePhotoSelected}
                     />
                     <label htmlFor="import-photo-file" className="btn-secondary import-file-label">
                       {photoFile ? 'Choose a different photo' : 'Choose photo'}
+                    </label>
+                    <input
+                      type="file"
+                      id="import-photo-camera"
+                      className="import-file-input"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      capture="environment"
+                      onChange={handlePhotoSelected}
+                    />
+                    <label htmlFor="import-photo-camera" className="btn-secondary import-file-label import-camera-label">
+                      Take photo
                     </label>
                   </div>
                 </>
