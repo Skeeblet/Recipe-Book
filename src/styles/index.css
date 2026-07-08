@@ -819,6 +819,13 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 .ps-subpage-content { padding: 20px; }
 .ps-subpage--elevated { z-index: 161; } /* sits above the Tags sub-page */
 
+/* Feedback sub-page */
+.ps-feedback { display: flex; flex-direction: column; gap: 14px; }
+.ps-feedback-input { width: 100%; min-height: 160px; padding: 12px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; line-height: 1.5; color: var(--text-body); background: var(--cream); outline: none; resize: vertical; box-sizing: border-box; }
+.ps-feedback-input:focus { border-color: var(--brown-light); }
+.ps-feedback-send { align-self: flex-start; }
+.ps-feedback-send:disabled { opacity: 0.45; cursor: default; }
+
 /* Search in Recipes sub-page */
 .ps-subpage-search-wrap { margin-bottom: 16px; }
 .ps-search {

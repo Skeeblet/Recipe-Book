@@ -30,6 +30,7 @@ export default function ProfilePage({ auth, data, handlers, pwa, initialPage, on
   if (activePage === 'tags')    return <TagsPage    {...subProps} />
   if (activePage === 'display') return <DisplayPage {...subProps} />
   if (activePage === 'appinfo') return <AppInfoPage {...subProps} />
+  if (activePage === 'feedback') return <FeedbackPage {...subProps} />
 
   return <ProfileHub auth={auth} onNavigate={setActivePage} />
 }
@@ -73,7 +74,7 @@ function ProfileHub({ auth, onNavigate }) {
         <div className="ps-hub-group-label">Settings</div>
 
         <div className="ps-hub-rows">
-          {['AI', 'Recipes', 'Tags', 'Display', 'App info'].map(label => (
+          {['AI', 'Recipes', 'Tags', 'Display', 'Feedback', 'App info'].map(label => (
             <button
               key={label}
               className="ps-hub-nav-btn"
@@ -122,6 +123,45 @@ function SubPage({ title, onBack, children }) {
         {children}
       </div>
     </div>
+  )
+}
+
+/* ── Feedback sub-page ───────────────────────────────────────────── */
+const FEEDBACK_EMAIL = 'shlopydo1@gmail.com'
+
+function FeedbackPage({ onBack }) {
+  const [message, setMessage] = useState('')
+
+  function send() {
+    const body = message.trim()
+    if (!body) return
+    // Subject + footer clearly mark every message as in-app feedback.
+    const subject = encodeURIComponent('My Recipe Box — app feedback')
+    const encodedBody = encodeURIComponent(
+      `${body}\n\n———\nSent as feedback from the My Recipe Box app (v${APP_VERSION})`
+    )
+    window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${encodedBody}`
+  }
+
+  return (
+    <SubPage title="Feedback" onBack={onBack}>
+      <div className="ps-feedback">
+        <p className="ps-desc">
+          Found a bug or have an idea? Send it straight to the developer. This opens your
+          email app with a feedback message ready to send.
+        </p>
+        <textarea
+          className="ps-feedback-input"
+          value={message}
+          onChange={e => setMessage(e.target.value)}
+          placeholder="What's on your mind?"
+        />
+        <p className="ps-desc">To include screenshots, attach them in your email app after it opens.</p>
+        <button className="btn-primary ps-feedback-send" onClick={send} disabled={!message.trim()}>
+          Send feedback
+        </button>
+      </div>
+    </SubPage>
   )
 }
 
