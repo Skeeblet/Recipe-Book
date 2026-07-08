@@ -42,10 +42,11 @@ export function normalizeImportedRecipe(raw) {
     .map(entry => {
       if (typeof entry === 'string') return splitIngredientLine(entry)
       if (entry && typeof entry === 'object' && typeof entry.name === 'string' && entry.name.trim()) {
-        return {
-          name: entry.name.trim(),
-          amount: entry.amount == null ? '' : String(entry.amount).trim(),
-        }
+        const name = entry.name.trim()
+        const amount = entry.amount == null ? '' : String(entry.amount).trim()
+        // Quantity embedded in the name with no amount — split it back out
+        if (!amount) return splitIngredientLine(name)
+        return { name, amount }
       }
       return null
     })

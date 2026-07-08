@@ -1,4 +1,5 @@
 import { statColorFor } from './importRecipe.js'
+import { splitIngredientLine } from './schemaOrgRecipe.js'
 
 const UNEXPECTED_MSG = 'The AI returned something unexpected. Try again.'
 const RESPONSE_RULES = 'Return ONLY valid JSON — no markdown, no code fences, no preamble, no explanation.'
@@ -10,17 +11,23 @@ function ingredientLines(recipe) {
 }
 
 export function buildOptimizePrompt(recipe, goal) {
+  // Show current ingredients in the same JSON shape the response must use —
+  // combined "2 cups rice" lines teach the model to stuff amounts into "name".
+  const currentIngredients = JSON.stringify(
+    recipe.ingredients.map(i => ({ name: i.name, amount: i.amount || '' }))
+  )
   return `Adjust this recipe's ingredients to meet this goal: ${goal}
 
 Recipe: ${recipe.title}
 Serves: ${recipe.servingLabel || '1 serving'}
-Current ingredients:
-${ingredientLines(recipe)}
+Current ingredients (JSON):
+${currentIngredients}
 
 Rules:
 - Keep the dish recognizable — substitute, remove, or adjust amounts only as the goal requires.
 - Return the COMPLETE new ingredient list, including unchanged ingredients exactly as they are.
 - Use realistic amounts in the same style as the current list.
+- Quantities belong ONLY in "amount" — the "name" field must never contain a quantity or unit.
 - Recompute per-serving nutrition for the modified recipe.
 
 ${RESPONSE_RULES}
@@ -55,8 +62,17 @@ If the ingredient list is too vague to estimate, return {"error": true, "message
 export function parseOptimizeResponse(json) {
   if (json.error) throw new Error(json.message || UNEXPECTED_MSG)
   const ingredients = (Array.isArray(json.ingredients) ? json.ingredients : [])
-    .filter(i => i && typeof i === 'object' && typeof i.name === 'string' && i.name.trim())
-    .map(i => ({ name: i.name.trim(), amount: i.amount == null ? '' : String(i.amount).trim() }))
+    .map(entry => {
+      if (typeof entry === 'string') return splitIngredientLine(entry)
+      if (!entry || typeof entry !== 'object' || typeof entry.name !== 'string' || !entry.name.trim()) return null
+      const name = entry.name.trim()
+      const amount = entry.amount == null ? '' : String(entry.amount).trim()
+      // The model sometimes embeds the quantity in the name ("2 cups rice",
+      // amount empty) — split it back out into the amount field.
+      if (!amount) return splitIngredientLine(name)
+      return { name, amount }
+    })
+    .filter(i => i && i.name)
   if (ingredients.length === 0) throw new Error(UNEXPECTED_MSG)
   const stats = (Array.isArray(json.stats) ? json.stats : [])
     .filter(s => s && s.label && s.value != null && String(s.value).trim())
