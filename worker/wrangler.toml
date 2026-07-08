@@ -1,0 +1,6 @@
+name = "recipe-box-fetch"
+main = "index.js"
+compatibility_date = "2025-07-01"
+
+# No bindings, no dependencies — a single-file fetch proxy.
+# Deploy: npx wrangler login && npx wrangler deploy  (run from this directory)
