@@ -667,6 +667,7 @@ export default function App() {
           onSubmit={handleFormSubmit}
           onClose={() => setFormState({ open: false, recipe: null })}
           recipes={recipes}
+          settings={settings}
         />
       )}
 

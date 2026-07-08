@@ -244,6 +244,15 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 .modal-body { padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; max-height: 75vh; overflow-y: auto; overflow-x: hidden; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 20px 28px; border-top: 1px solid var(--border); }
 
+/* Form: AI "change something" */
+.form-ai-modify { display: flex; flex-direction: column; gap: 8px; padding-bottom: 16px; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
+.form-ai-btn { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; background: transparent; color: var(--brown-mid); border: 1.5px dashed var(--border); border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.form-ai-btn:hover { border-color: var(--brown-light); border-style: solid; background: var(--card-bg); }
+.form-ai-btn svg { flex-shrink: 0; }
+.form-ai-input { width: 100%; padding: 9px 12px; border: 1.5px solid var(--brown-light); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; color: var(--text-body); background: var(--cream); outline: none; box-sizing: border-box; }
+.form-ai-input:focus { border-color: var(--accent); }
+.form-ai-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
 /* Form elements */
 .form-group { display: flex; flex-direction: column; gap: 8px; }
 .form-group label { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }

@@ -109,7 +109,7 @@ export function resolveTags(rawTags, allTags, addTag) {
 // Cloudflare Worker proxy is configured (VITE_FETCH_PROXY_URL, see worker/),
 // it's tried first for better social/website reliability, then falls back to
 // the public ones. Unset → behaves exactly like the public-only list.
-const CUSTOM_PROXY = import.meta.env.VITE_FETCH_PROXY_URL
+const CUSTOM_PROXY = import.meta.env?.VITE_FETCH_PROXY_URL
 export const CORS_PROXIES = [
   ...(CUSTOM_PROXY ? [url => `${CUSTOM_PROXY}?url=${encodeURIComponent(url)}`] : []),
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,

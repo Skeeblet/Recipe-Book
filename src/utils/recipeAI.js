@@ -46,6 +46,44 @@ Schema:
 If the goal cannot reasonably be applied to this recipe, return {"error": true, "message": "short reason"} instead.`
 }
 
+// Free-form "change something" edit over the whole recipe (used from the
+// recipe form). Returns the complete modified recipe in the import schema, so
+// the caller can run it through normalizeImportedRecipe.
+export function buildModifyPrompt(recipe, instruction) {
+  return `Modify this recipe as requested, then return the COMPLETE updated recipe.
+
+Change requested: ${instruction}
+
+Current recipe:
+${JSON.stringify(recipe, null, 2)}
+
+Rules:
+- Apply the requested change and keep everything else intact.
+- Return the full recipe (all fields), not just the parts that changed.
+- Quantities belong ONLY in "amount" — an ingredient "name" must never contain a quantity or unit.
+- If the change affects the food, recompute per-serving stats (Cal, Protein, Fiber, Fat).
+
+${RESPONSE_RULES}
+Schema:
+{
+  "title": "string",
+  "description": "string",
+  "category": "one of: Breakfast, Lunch & Dinner, Sauces, Snacks, Desserts",
+  "estimatedTime": "total time like \\"30 min\\"",
+  "servingLabel": "yield like \\"Makes 4 servings\\"",
+  "ingredients": [{ "name": "string", "amount": "string" }],
+  "steps": ["one string per step"],
+  "notes": [{ "title": "string", "body": "string" }],
+  "stats": [
+    { "label": "Cal", "value": "420" },
+    { "label": "Protein", "value": "32g" },
+    { "label": "Fiber", "value": "6g" },
+    { "label": "Fat", "value": "12g" }
+  ]
+}
+If the request doesn't make sense for this recipe, return {"error": true, "message": "short reason"} instead.`
+}
+
 export function buildNutritionPrompt(recipe) {
   return `Estimate accurate per-serving nutrition for this recipe from its ingredients and amounts.
 
