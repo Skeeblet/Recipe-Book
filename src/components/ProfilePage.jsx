@@ -186,7 +186,7 @@ function AIPage({ data, handlers, onBack }) {
         <div className="ps-row">
           <div className="ps-row-label">
             <span className="ps-label">Auto nutrition check</span>
-            <span className="ps-desc">Estimate calories, protein, fiber, and fat with AI when a new recipe has none.</span>
+            <span className="ps-desc">Estimate calories, protein, fiber, and fat with AI when a new recipe is missing any of them.</span>
           </div>
           <button
             className={`toggle-btn${settings.autoNutrition ? ' on' : ''}`}

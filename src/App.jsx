@@ -291,25 +291,34 @@ export default function App() {
     setImportState({ open: false, method: null, prefill: '' })
   }
 
-  // Fire-and-forget: newly added recipes with no core nutrition stats get an
-  // AI estimate in the background (Account setting, on by default). Failures
-  // are silent — the recipe simply keeps its empty stats.
+  // Fire-and-forget: newly added recipes missing any core nutrition stat get
+  // the gaps filled by an AI estimate in the background (AI setting, on by
+  // default). Failures leave the recipe as-is.
   function maybeAutoNutrition(recipe) {
     if (!settings.autoNutrition || !settings.aiApiKey) return
     if (!recipe.ingredients?.length) return
     const CORE = ['cal', 'protein', 'fiber', 'fat']
-    const hasCoreStat = (recipe.stats || []).some(
-      s => CORE.includes(normalizeStatLabel(s.label)) && String(s.value ?? '').trim()
+    // A stat only counts as present if its value contains a digit — "N/A" or
+    // "unknown" placeholders from an import must not suppress the check.
+    const present = new Set(
+      (recipe.stats || [])
+        .filter(s => /\d/.test(String(s.value ?? '')))
+        .map(s => normalizeStatLabel(s.label))
     )
-    if (hasCoreStat) return
+    const missing = CORE.filter(label => !present.has(label))
+    if (missing.length === 0) return
     callAI(buildNutritionPrompt(recipe), settings)
       .then(text => {
-        const merged = mergeStats(recipe.stats || [], parseNutritionResponse(extractJson(text)))
+        // Fill only the gaps — never overwrite a real value from the source
+        const estimates = parseNutritionResponse(extractJson(text))
+          .filter(s => missing.includes(normalizeStatLabel(s.label)))
+        if (estimates.length === 0) return
+        const merged = mergeStats(recipe.stats || [], estimates)
         updateRecipe(recipe.id, { stats: merged })
         setSelectedRecipe(r => (r && r.id === recipe.id ? { ...r, stats: merged } : r))
         showToast('Nutrition estimated with AI')
       })
-      .catch(() => {})
+      .catch(err => console.warn('Auto nutrition check failed:', err))
   }
 
   function handleImport(data) {
