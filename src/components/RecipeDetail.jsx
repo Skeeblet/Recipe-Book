@@ -42,7 +42,10 @@ export default function RecipeDetail({
   return (
     <div className={`detail-overlay${isPrinting ? ' printing' : ''}`}>
       <div className="detail-topbar">
-        <button className="detail-back-btn" onClick={onBack}>← Back</button>
+        <button className="detail-back-btn" onClick={onBack}>
+          <span aria-hidden="true">←</span>
+          <span className="detail-back-label">Back</span>
+        </button>
         <div className="detail-topbar-title">
           <span className="detail-topbar-name">{recipe.title}</span>
         </div>
