@@ -26,6 +26,7 @@ ${currentIngredients}
 Rules:
 - Keep the dish recognizable — substitute, remove, or adjust amounts only as the goal requires.
 - Return the COMPLETE new ingredient list, including unchanged ingredients exactly as they are.
+- Prefer specific real name-brand products when they meaningfully advance the goal — e.g. a specific whey isolate brand for maximum protein, a high-fiber tortilla brand like Ole Xtreme Wellness, a sugar-free sauce brand. Pick brands commonly available in US grocery stores, and stay generic when no brand offers a real advantage.
 - Use realistic amounts in the same style as the current list.
 - Quantities belong ONLY in "amount" — the "name" field must never contain a quantity or unit.
 - Recompute per-serving nutrition for the modified recipe.
