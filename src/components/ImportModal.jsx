@@ -19,12 +19,11 @@ import {
 
 // ── Tile icons ────────────────────────────────────────────────────────────────
 
-function GlobeIcon() {
+function LinkIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <path d="M12 3a13.5 13.5 0 0 1 4 9 13.5 13.5 0 0 1-4 9 13.5 13.5 0 0 1-4-9 13.5 13.5 0 0 1 4-9z" />
+      <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" />
+      <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" />
     </svg>
   )
 }
@@ -45,27 +44,6 @@ function DocumentIcon() {
       <polyline points="14 2 14 8 20 8" />
       <line x1="8" y1="13" x2="16" y2="13" />
       <line x1="8" y1="17" x2="16" y2="17" />
-    </svg>
-  )
-}
-
-function PlayIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="4" width="20" height="16" rx="4" />
-      <polygon points="10 9 15 12 10 15 10 9" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-function ShareArrowIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="18" cy="5" r="3" />
-      <circle cx="6" cy="12" r="3" />
-      <circle cx="18" cy="19" r="3" />
-      <line x1="8.6" y1="10.5" x2="15.4" y2="6.5" />
-      <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
     </svg>
   )
 }
@@ -106,25 +84,32 @@ function BackIcon() {
 
 // ── Method config ─────────────────────────────────────────────────────────────
 
+// One "link" tile handles website / YouTube / Instagram / TikTok — the URL is
+// parsed at import time and routed to the right extractor. No requiresKey gate:
+// website works keyless via Schema.org, and the AI-only routes surface the key
+// prompt on submit (MissingApiKeyError) instead of graying out the tile.
 const METHODS = [
-  { key: 'website', label: 'Website', icon: GlobeIcon, enabled: true },
+  { key: 'link', label: 'From a link', icon: LinkIcon, enabled: true },
   { key: 'photo', label: 'Photo', icon: CameraIcon, enabled: true, requiresKey: true },
   { key: 'text', label: 'Text', icon: DocumentIcon, enabled: true, requiresKey: true },
-  { key: 'youtube', label: 'YouTube', icon: PlayIcon, enabled: true, requiresKey: true },
-  { key: 'social', label: 'Instagram / TikTok', icon: ShareArrowIcon, enabled: true, requiresKey: true },
   { key: 'json', label: 'JSON', icon: CodeIcon, enabled: true },
   { key: 'ai', label: 'Create with AI', icon: SparkleIcon, enabled: true, requiresKey: true },
   { key: 'manual', label: 'Create manually', icon: PencilIcon, enabled: true },
 ]
 
 const METHOD_TITLES = {
-  website: 'Import from website',
+  link: 'Import from a link',
   photo: 'Import from photo',
   text: 'Import from text',
-  youtube: 'Import from YouTube',
-  social: 'Import from Instagram / TikTok',
   json: 'Import from JSON',
   ai: 'Create with AI',
+}
+
+// Route a pasted URL to the matching extractor.
+function detectLinkType(url) {
+  if (extractVideoId(url)) return 'youtube'
+  if (isSocialUrl(url)) return 'social'
+  return 'website'
 }
 
 // Downscale to <=1200px on the longest side and re-encode as JPEG so the
@@ -322,6 +307,13 @@ export default function ImportModal({
     return normalizeImportedRecipe(json)
   }
 
+  async function importLink(url, signal) {
+    const type = detectLinkType(url)
+    if (type === 'youtube') return importYouTube(url, signal)
+    if (type === 'social') return importSocial(url, signal)
+    return importWebsite(url, signal)
+  }
+
   function importJson(text) {
     let parsed
     try {
@@ -345,15 +337,11 @@ export default function ImportModal({
         return
       }
     } else if (!input.trim()) {
-      setError(method === 'website' || method === 'youtube' || method === 'social' ? 'Enter a URL first.' : 'Nothing to import yet — add some content first.')
+      setError(method === 'link' ? 'Paste a link first.' : 'Nothing to import yet — add some content first.')
       return
     }
-    if (method === 'youtube' && !extractVideoId(input)) {
-      setError("That doesn't look like a YouTube URL.")
-      return
-    }
-    if (method === 'social' && !isSocialUrl(input)) {
-      setError("That doesn't look like an Instagram or TikTok URL.")
+    if (method === 'link' && !/^(https?:\/\/|www\.)|\.[a-z]{2,}/i.test(input.trim())) {
+      setError("That doesn't look like a link. Paste a website, YouTube, Instagram, or TikTok URL.")
       return
     }
 
@@ -371,21 +359,20 @@ export default function ImportModal({
     const controller = new AbortController()
     abortRef.current = controller
     const id = ++requestId.current
+    const linkType = method === 'link' ? detectLinkType(input) : null
     setLoadingMsg(
       method === 'ai' ? 'Generating recipe…'
       : method === 'photo' ? 'Reading recipe from photo…'
-      : method === 'youtube' ? 'Fetching video transcript…'
-      : method === 'social' ? 'Looking for the recipe…'
+      : linkType === 'youtube' ? 'Fetching video transcript…'
+      : linkType === 'social' ? 'Looking for the recipe…'
       : 'Reading recipe…'
     )
     setStep('loading')
 
     try {
       let result
-      if (method === 'website') result = await importWebsite(input, controller.signal)
+      if (method === 'link') result = await importLink(input, controller.signal)
       else if (method === 'photo') result = await importPhoto(controller.signal)
-      else if (method === 'youtube') result = await importYouTube(input, controller.signal)
-      else if (method === 'social') result = await importSocial(input, controller.signal)
       else if (method === 'text') result = await importText(input, controller.signal)
       else result = await importGenerate(input, controller.signal)
       if (id !== requestId.current) return
@@ -449,7 +436,9 @@ export default function ImportModal({
     : step === 'review' ? 'Review recipe'
     : METHOD_TITLES[method] || 'Import recipe'
 
-  const methodNeedsAI = method === 'text' || method === 'ai' || method === 'photo' || method === 'youtube' || method === 'social'
+  // 'link' is intentionally excluded — a website URL works without a key, so
+  // the key prompt surfaces only if a route actually needs AI (via needsKey).
+  const methodNeedsAI = method === 'text' || method === 'ai' || method === 'photo'
 
   return (
     <div
@@ -496,18 +485,18 @@ export default function ImportModal({
         {step === 'input' && (
           <>
             <div className="modal-body">
-              {method === 'website' && (
+              {method === 'link' && (
                 <>
                   <p className="import-hint">
-                    Paste a link to a recipe page. Needs an internet connection and may not
-                    work on every site.
+                    Paste a link from a recipe website, YouTube, Instagram, or TikTok.
+                    Needs an internet connection and may not work on every site.
                   </p>
                   <input
                     type="text"
                     className="import-url-input"
                     value={input}
                     onChange={e => updateInput(e.target.value)}
-                    placeholder="https://example.com/best-banana-bread"
+                    placeholder="https://example.com/… , a YouTube, Instagram, or TikTok link"
                     inputMode="url"
                     autoFocus
                     onKeyDown={e => e.key === 'Enter' && runImport()}
@@ -550,45 +539,6 @@ export default function ImportModal({
                       Take photo
                     </label>
                   </div>
-                </>
-              )}
-
-              {method === 'youtube' && (
-                <>
-                  <p className="import-hint">
-                    Paste a link to a cooking video. Works best on videos with captions or
-                    subtitles.
-                  </p>
-                  <input
-                    type="text"
-                    className="import-url-input"
-                    value={input}
-                    onChange={e => updateInput(e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=…"
-                    inputMode="url"
-                    autoFocus
-                    onKeyDown={e => e.key === 'Enter' && runImport()}
-                  />
-                </>
-              )}
-
-              {method === 'social' && (
-                <>
-                  <p className="import-hint">
-                    Paste a link to an Instagram or TikTok post. Works best when the recipe is
-                    in the post caption — Instagram and TikTok limit what apps can read, so
-                    results vary.
-                  </p>
-                  <input
-                    type="text"
-                    className="import-url-input"
-                    value={input}
-                    onChange={e => updateInput(e.target.value)}
-                    placeholder="https://www.instagram.com/p/… or https://www.tiktok.com/@…"
-                    inputMode="url"
-                    autoFocus
-                    onKeyDown={e => e.key === 'Enter' && runImport()}
-                  />
                 </>
               )}
 

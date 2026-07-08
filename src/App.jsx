@@ -405,10 +405,8 @@ export default function App() {
     const sharedUrl = params.get('url') || (urlMatch ? urlMatch[0].replace(/[.,;:)\]}>]+$/, '') : null)
 
     if (sharedUrl) {
-      let method = 'website'
-      if (/youtube\.com|youtu\.be/.test(sharedUrl)) method = 'youtube'
-      else if (/instagram\.com|instagr\.am|tiktok\.com/.test(sharedUrl)) method = 'social'
-      setImportState({ open: true, method, prefill: sharedUrl })
+      // The link method parses website / YouTube / Instagram / TikTok itself
+      setImportState({ open: true, method: 'link', prefill: sharedUrl })
     } else {
       setImportState({ open: true, method: 'text', prefill: sharedText })
     }
