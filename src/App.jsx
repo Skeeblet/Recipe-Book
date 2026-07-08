@@ -367,10 +367,13 @@ export default function App() {
     maybeAutoNutrition(newRecipe)
   }
 
-  // Deep link: open recipe from ?recipe=id query param
+  // Deep link: open recipe from ?recipe=id query param.
+  // Runs once auth resolves — must NOT gate on recipes.length, or a recipient
+  // with an empty library (the whole point of sharing) never sees the recipe.
+  // Local recipes load synchronously from localStorage, so the lookup below is
+  // populated for existing users; new users fall through to the cloud fetch.
   useEffect(() => {
     if (authLoading) return
-    if (recipes.length === 0) return
     if (deepLinkHandled.current) return
     deepLinkHandled.current = true
 
