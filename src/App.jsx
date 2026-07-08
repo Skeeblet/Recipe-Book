@@ -321,15 +321,6 @@ export default function App() {
       .catch(err => console.warn('Auto nutrition check failed:', err))
   }
 
-  function handleImport(data) {
-    const id = 'user-' + Date.now()
-    const newRecipe = { ...data, id }
-    addRecipe(newRecipe)
-    appendNew(id)
-    closeImport()
-    maybeAutoNutrition(newRecipe)
-  }
-
   function handleConflictResolve(recipe, action) {
     if (action === 'keep') {
       // The cloud replace dropped this local-only recipe — restore it locally
@@ -683,7 +674,6 @@ export default function App() {
         <ImportModal
           allTags={allTags}
           onAddTag={addTag}
-          onImport={handleImport}
           onEditFirst={draft => {
             closeImport()
             setFormState({ open: true, recipe: draft })

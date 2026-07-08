@@ -148,7 +148,6 @@ const API_KEY_MSG =
 export default function ImportModal({
   allTags,
   onAddTag,
-  onImport,
   onEditFirst,
   onCreateManually,
   onOpenAISettings,
@@ -157,13 +156,12 @@ export default function ImportModal({
   initialMethod = null,
   prefill = '',
 }) {
-  const [step, setStep] = useState(initialMethod ? 'input' : 'picker') // picker | input | loading | review
+  const [step, setStep] = useState(initialMethod ? 'input' : 'picker') // picker | input | loading
   const [method, setMethod] = useState(initialMethod)
   const [input, setInput] = useState(prefill)
   const [error, setError] = useState('')
   const [needsKey, setNeedsKey] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
-  const [draft, setDraft] = useState(null)
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const requestId = useRef(0)
@@ -224,7 +222,6 @@ export default function ImportModal({
     setInput('')
     setError('')
     setNeedsKey(false)
-    setDraft(null)
     setPhotoFile(null)
     setPhotoPreview(null)
     setStep('input')
@@ -233,7 +230,7 @@ export default function ImportModal({
   function goBack() {
     userInteractedRef.current = true
     cancelInFlight()
-    if (step === 'review' || step === 'loading') {
+    if (step === 'loading') {
       setStep('input')
     } else {
       setError('')
@@ -347,8 +344,7 @@ export default function ImportModal({
 
     if (method === 'json') {
       try {
-        setDraft(importJson(input))
-        setStep('review')
+        onEditFirst(finalizeDraft(importJson(input)))
       } catch (e) {
         setError(e.message)
       }
@@ -376,8 +372,10 @@ export default function ImportModal({
       else if (method === 'text') result = await importText(input, controller.signal)
       else result = await importGenerate(input, controller.signal)
       if (id !== requestId.current) return
-      setDraft(result)
-      setStep('review')
+      // Skip the summary review and open the full editable form so everything
+      // (ingredients, steps, stats, tags) can be checked before saving.
+      onEditFirst(finalizeDraft(result))
+      return
     } catch (e) {
       if (e.name === 'AbortError' || id !== requestId.current) return
       if (e instanceof MissingApiKeyError) {
@@ -389,17 +387,12 @@ export default function ImportModal({
     }
   }
 
-  function handleTryAgain() {
-    cancelInFlight()
-    setDraft(null)
-    setStep('input')
-  }
-
-  function finalizeDraft() {
-    // AI-suggested and scraped tags may only match existing tags, never create
-    // new ones. JSON import is user-authored data, so unknown tags are created.
+  // Resolve tags before handing the parsed recipe to the editable form.
+  // AI-suggested and scraped tags may only match existing tags, never create
+  // new ones. JSON import is user-authored data, so unknown tags are created.
+  function finalizeDraft(d) {
     const addFn = method === 'json' ? onAddTag : null
-    return { ...draft, tags: resolveTags(draft.tags, allTags, addFn) }
+    return { ...d, tags: resolveTags(d.tags, allTags, addFn) }
   }
 
   function handlePhotoSelected(e) {
@@ -433,7 +426,6 @@ export default function ImportModal({
 
   const headerTitle =
     step === 'picker' ? 'Add a recipe'
-    : step === 'review' ? 'Review recipe'
     : METHOD_TITLES[method] || 'Import recipe'
 
   // 'link' is intentionally excluded — a website URL works without a key, so
@@ -644,39 +636,6 @@ export default function ImportModal({
               <button type="button" className="btn-secondary" onClick={goBack}>Cancel</button>
             </div>
           </div>
-        )}
-
-        {step === 'review' && draft && (
-          <>
-            <div className="modal-body">
-              <div className="import-review-title">{draft.title}</div>
-              {draft.description && (
-                <p className="import-review-desc">{draft.description}</p>
-              )}
-              <div className="import-review-meta">
-                <span>{draft.ingredients.length} ingredient{draft.ingredients.length === 1 ? '' : 's'}</span>
-                <span>·</span>
-                <span>{draft.steps.length} step{draft.steps.length === 1 ? '' : 's'}</span>
-                {draft.estimatedTime && (
-                  <>
-                    <span>·</span>
-                    <span>{draft.estimatedTime}</span>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="modal-footer import-review-actions">
-              <button type="button" className="btn-secondary" onClick={handleTryAgain}>
-                Try again
-              </button>
-              <button type="button" className="btn-secondary" onClick={() => onEditFirst(finalizeDraft())}>
-                Edit first
-              </button>
-              <button type="button" className="btn-primary" onClick={() => onImport(finalizeDraft())}>
-                Looks good — add it
-              </button>
-            </div>
-          </>
         )}
       </div>
     </div>
