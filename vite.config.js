@@ -35,6 +35,7 @@ export default defineConfig({
           params: { title: 'title', text: 'text', url: 'url' },
         },
         display: 'standalone',
+        orientation: 'portrait',
         background_color: '#FAF7F2',
         theme_color: '#D4622A',
         icons: [
