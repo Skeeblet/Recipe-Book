@@ -803,6 +803,16 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 }
 .ps-input:focus { border-color: var(--brown-light); }
 
+/* API key: status + modal */
+.ai-key-control { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.ai-key-status { font-size: 0.8125rem; color: var(--text-muted); letter-spacing: 0.05em; }
+.ai-key-status--set { color: var(--brown-mid); }
+.ai-key-modal { max-width: 440px !important; }
+.ai-key-input-row { display: flex; gap: 8px; align-items: center; }
+.ai-key-input { max-width: none; flex: 1; font-family: 'Courier New', monospace; }
+.ai-key-remove { margin-right: auto; color: #B03030 !important; border-color: var(--border) !important; }
+.ai-key-remove:hover { background: #FAE8E8 !important; border-color: #B03030 !important; }
+
 /* ── Profile page: sub-page overlay ─────────────────────────────── */
 .ps-subpage {
   position: fixed; inset: 0; z-index: 160;

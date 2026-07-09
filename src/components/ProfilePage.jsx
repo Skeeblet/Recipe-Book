@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import ConfirmDialog from './ConfirmDialog.jsx'
 import { COLOR_PALETTE } from '../hooks/useTags.js'
 
@@ -170,6 +171,8 @@ function AIPage({ data, handlers, onBack }) {
   const { settings } = data
   const { onSettingChange } = handlers
   const isClaude = settings.aiModel === 'claude-sonnet'
+  const hasKey = !!settings.aiApiKey
+  const [keyModalOpen, setKeyModalOpen] = useState(false)
 
   return (
     <SubPage title="AI" onBack={onBack}>
@@ -211,15 +214,24 @@ function AIPage({ data, handlers, onBack }) {
             <span className="ps-label">API key</span>
             <span className="ps-desc">Used for recipe import and ingredient sorting. Stays on this device.</span>
           </div>
-          <input
-            type="password"
-            className="ps-input"
-            value={settings.aiApiKey || ''}
-            onChange={e => onSettingChange('aiApiKey', e.target.value)}
-            placeholder="Paste API key…"
-          />
+          <div className="ai-key-control">
+            <span className={`ai-key-status${hasKey ? ' ai-key-status--set' : ''}`}>
+              {hasKey ? '••••••••' : 'Not set'}
+            </span>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setKeyModalOpen(true)}>
+              {hasKey ? 'Change' : 'Add key'}
+            </button>
+          </div>
         </div>
       </div>
+
+      {keyModalOpen && (
+        <ApiKeyModal
+          currentKey={settings.aiApiKey || ''}
+          onSave={key => onSettingChange('aiApiKey', key)}
+          onClose={() => setKeyModalOpen(false)}
+        />
+      )}
 
       <div className="ps-section-label">AI settings</div>
       <div className="ps-rows">
@@ -237,6 +249,60 @@ function AIPage({ data, handlers, onBack }) {
         </div>
       </div>
     </SubPage>
+  )
+}
+
+/* Explicit key-entry dialog — an intentional Save reads as safer than a field
+   that silently persists every keystroke. Portaled so it clears the nav. */
+function ApiKeyModal({ currentKey, onSave, onClose }) {
+  const [value, setValue] = useState(currentKey)
+  const [show, setShow] = useState(false)
+
+  function save() {
+    onSave(value.trim())
+    onClose()
+  }
+
+  return createPortal(
+    <div className="modal-overlay modal-overlay--centered" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal ai-key-modal">
+        <div className="modal-header">
+          <h2>AI API key</h2>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <p className="ps-desc">
+            Stored only on this device — never sent to our servers or synced to the cloud.
+          </p>
+          <div className="ai-key-input-row">
+            <input
+              type={show ? 'text' : 'password'}
+              className="ps-input ai-key-input"
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              placeholder="Paste your API key…"
+              autoFocus
+              spellCheck={false}
+              autoComplete="off"
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); save() } }}
+            />
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setShow(s => !s)}>
+              {show ? 'Hide' : 'Show'}
+            </button>
+          </div>
+        </div>
+        <div className="modal-footer">
+          {currentKey && (
+            <button type="button" className="btn-secondary ai-key-remove" onClick={() => { onSave(''); onClose() }}>
+              Remove key
+            </button>
+          )}
+          <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn-primary" onClick={save}>Save</button>
+        </div>
+      </div>
+    </div>,
+    document.body
   )
 }
 
