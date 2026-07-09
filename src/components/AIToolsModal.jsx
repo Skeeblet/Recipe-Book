@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import AutoExpandTextarea from './AutoExpandTextarea.jsx'
 import { callAI, extractJson, MissingApiKeyError } from '../utils/aiClient.js'
 import {
   buildOptimizePrompt,
@@ -26,6 +27,7 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
   const [error, setError] = useState('')
   const [needsKey, setNeedsKey] = useState(false)
   const [result, setResult] = useState(null)
+  const [followUp, setFollowUp] = useState('')
   const requestId = useRef(0)
   const abortRef = useRef(null)
 
@@ -66,6 +68,17 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
 
   function runNutrition() {
     run(buildNutritionPrompt(recipe), parseNutritionResponse)
+  }
+
+  // Iterate on the current optimize result: feed the already-changed
+  // ingredients back in with a further instruction. The review still diffs
+  // against the original recipe, so the user sees the cumulative change.
+  function runFollowUp() {
+    const instruction = followUp.trim()
+    if (!instruction) return
+    const working = { title: recipe.title, servingLabel: recipe.servingLabel, ingredients: result.ingredients }
+    setFollowUp('')
+    run(buildOptimizePrompt(working, instruction), parseOptimizeResponse)
   }
 
   // Nutrition check has no inputs — start as soon as the modal opens.
@@ -125,14 +138,14 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
                 </button>
               </div>
               {goal === 'custom' && (
-                <input
-                  type="text"
-                  className="import-url-input"
+                <AutoExpandTextarea
+                  className="import-url-input auto-expand"
+                  rows={1}
                   value={customGoal}
                   onChange={e => { setCustomGoal(e.target.value); setError('') }}
                   placeholder='e.g. "dairy-free but keep it creamy"'
                   autoFocus
-                  onKeyDown={e => e.key === 'Enter' && runOptimize()}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runOptimize() } }}
                 />
               )}
               {needsKey && (
@@ -226,6 +239,20 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
                   <StatChanges oldStats={recipe.stats} newStats={result.stats} />
                 </>
               )}
+              <div className="ai-review-section-title">Not quite right?</div>
+              <div className="ai-followup">
+                <AutoExpandTextarea
+                  className="import-url-input auto-expand ai-followup-input"
+                  rows={1}
+                  value={followUp}
+                  onChange={e => setFollowUp(e.target.value)}
+                  placeholder="Ask for another change… e.g. also make it gluten-free, use less oil"
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runFollowUp() } }}
+                />
+                <button type="button" className="btn-secondary btn-sm" onClick={runFollowUp} disabled={!followUp.trim()}>
+                  Send
+                </button>
+              </div>
             </div>
             <div className="modal-footer">
               <button type="button" className="btn-secondary" onClick={handleClose}>Cancel</button>

@@ -449,6 +449,8 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 .ai-diff-tag { flex-shrink: 0; font-size: 0.5625rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); background: var(--cream); border: 1px solid var(--border); border-radius: 8px; padding: 2px 6px; }
 .ai-diff-tag--added { color: #4A6741; background: #EAF0E8; border-color: #4A6741; }
 .ai-diff-tag--removed { color: #B03030; background: #FAE8E8; border-color: #B03030; }
+.ai-followup { display: flex; gap: 8px; align-items: flex-start; }
+.ai-followup-input { flex: 1; min-width: 0; }
 
 /* Bottom sheet on mobile */
 @media (max-width: 768px) {
