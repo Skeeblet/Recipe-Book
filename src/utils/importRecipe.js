@@ -189,11 +189,11 @@ export function buildTextPrompt(text, existingTags = []) {
 }
 
 export function buildPhotoPrompt(existingTags = []) {
-  return `This is a photo of a recipe. Extract the complete recipe.
+  return `These are one or more photos of a SINGLE recipe (for example the front and back of a recipe card, or several pages). Combine information from all the images into one complete recipe — do not treat them as separate recipes.
 
 ${schemaInstructions(existingTags)}
 
-If you cannot read a complete recipe from this image, return {"error": true, "message": "Could not read recipe from image"} instead.`
+If you cannot read a complete recipe from these images, return {"error": true, "message": "Could not read recipe from image"} instead.`
 }
 
 export function buildYouTubePrompt(title, description, transcript, existingTags = []) {

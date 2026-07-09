@@ -162,21 +162,22 @@ export default function ImportModal({
   const [error, setError] = useState('')
   const [needsKey, setNeedsKey] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
-  const [photoFile, setPhotoFile] = useState(null)
-  const [photoPreview, setPhotoPreview] = useState(null)
+  const [photos, setPhotos] = useState([]) // [{ file, url }] — multiple pages of one recipe
   const requestId = useRef(0)
   const abortRef = useRef(null)
   const userInteractedRef = useRef(false)
   const initialMethodRef = useRef(initialMethod)
   const prefillRef = useRef(prefill)
+  const photosRef = useRef([])
+  photosRef.current = photos
 
   const hasApiKey = !!settings?.aiApiKey
   const existingTagSlugs = allTags.map(t => t.tag)
 
-  // Revoke the preview object URL whenever it's replaced or on unmount
+  // Revoke any preview object URLs on unmount
   useEffect(() => {
-    return () => { if (photoPreview) URL.revokeObjectURL(photoPreview) }
-  }, [photoPreview])
+    return () => { photosRef.current.forEach(p => URL.revokeObjectURL(p.url)) }
+  }, [])
 
   // Share-target flow: auto-start the import shortly after opening with a
   // prefilled URL, unless the user interacts first or a required key is missing.
@@ -222,8 +223,8 @@ export default function ImportModal({
     setInput('')
     setError('')
     setNeedsKey(false)
-    setPhotoFile(null)
-    setPhotoPreview(null)
+    photosRef.current.forEach(p => URL.revokeObjectURL(p.url))
+    setPhotos([])
     setStep('input')
   }
 
@@ -264,8 +265,8 @@ export default function ImportModal({
   }
 
   async function importPhoto(signal) {
-    const base64 = await fileToResizedBase64(photoFile)
-    const json = extractJson(await callAI(buildPhotoPrompt(existingTagSlugs), settings, base64, signal))
+    const base64s = await Promise.all(photos.map(p => fileToResizedBase64(p.file)))
+    const json = extractJson(await callAI(buildPhotoPrompt(existingTagSlugs), settings, base64s, signal))
     if (json.error) {
       throw new Error("Couldn't read a recipe from that photo. Try a clearer image or use text import instead.")
     }
@@ -329,8 +330,8 @@ export default function ImportModal({
     setError('')
     setNeedsKey(false)
     if (method === 'photo') {
-      if (!photoFile) {
-        setError('Choose a photo first.')
+      if (photos.length === 0) {
+        setError('Add at least one photo first.')
         return
       }
     } else if (!input.trim()) {
@@ -397,12 +398,18 @@ export default function ImportModal({
 
   function handlePhotoSelected(e) {
     userInteractedRef.current = true
-    const file = e.target.files?.[0]
+    const files = Array.from(e.target.files || [])
     e.target.value = ''
-    if (!file) return
-    setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
+    if (!files.length) return
+    setPhotos(prev => [...prev, ...files.map(f => ({ file: f, url: URL.createObjectURL(f) }))])
     setError('')
+  }
+
+  function removePhoto(i) {
+    setPhotos(prev => {
+      if (prev[i]) URL.revokeObjectURL(prev[i].url)
+      return prev.filter((_, idx) => idx !== i)
+    })
   }
 
   function handleFile(e) {
@@ -499,25 +506,38 @@ export default function ImportModal({
               {method === 'photo' && (
                 <>
                   <p className="import-hint">
-                    Snap or choose a photo of a recipe — a cookbook page, a printed card, or a
-                    screenshot.
+                    Snap or choose photos of a recipe — a cookbook page, a printed card, or a
+                    screenshot. Add more than one if it spans multiple pages or sides.
                   </p>
-                  {photoPreview && (
-                    <img className="import-photo-preview" src={photoPreview} alt="Selected recipe" />
+                  {photos.length > 0 && (
+                    <div className="import-photo-grid">
+                      {photos.map((p, i) => (
+                        <div key={p.url} className="import-photo-thumb">
+                          <img src={p.url} alt={`Recipe photo ${i + 1}`} />
+                          <button
+                            type="button"
+                            className="import-photo-remove"
+                            aria-label="Remove photo"
+                            onClick={() => removePhoto(i)}
+                          >✕</button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                   <div className="import-photo-row">
-                    {/* No capture attribute: gallery/file picker. The capture
-                        variant below forces the camera — having it on this
-                        input would block gallery access on Android. */}
+                    {/* No capture attribute: gallery/file picker (multiple). The
+                        capture variant below forces the camera — having it on
+                        this input would block gallery access on Android. */}
                     <input
                       type="file"
                       id="import-photo-file"
                       className="import-file-input"
                       accept="image/jpeg,image/png,image/webp,image/gif"
+                      multiple
                       onChange={handlePhotoSelected}
                     />
                     <label htmlFor="import-photo-file" className="btn-secondary import-file-label">
-                      {photoFile ? 'Choose a different photo' : 'Choose photo'}
+                      {photos.length ? 'Add photos' : 'Choose photos'}
                     </label>
                     <input
                       type="file"
@@ -620,7 +640,7 @@ export default function ImportModal({
                 type="button"
                 className="btn-primary"
                 onClick={runImport}
-                disabled={method === 'photo' && !photoFile}
+                disabled={method === 'photo' && photos.length === 0}
               >
                 {method === 'ai' ? 'Generate' : 'Import'}
               </button>

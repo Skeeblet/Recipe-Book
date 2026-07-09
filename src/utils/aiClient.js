@@ -7,21 +7,21 @@ export class MissingApiKeyError extends Error {
 
 const UNEXPECTED_MSG = 'The AI returned something unexpected. Try again or use a different source.'
 
+// imageBase64 may be a single base64 string or an array of them (all JPEG).
 export async function callAI(prompt, settings, imageBase64 = null, signal = null) {
   const { aiModel, aiApiKey } = settings || {}
   if (!aiApiKey) throw new MissingApiKeyError()
 
+  const images = imageBase64 == null ? [] : (Array.isArray(imageBase64) ? imageBase64 : [imageBase64])
   const isClaude = aiModel === 'claude-sonnet'
   let res
   try {
     if (isClaude) {
-      const content = [{ type: 'text', text: prompt }]
-      if (imageBase64) {
-        content.unshift({
-          type: 'image',
-          source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 },
-        })
-      }
+      // Images before the text prompt, per Anthropic's guidance.
+      const content = [
+        ...images.map(data => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } })),
+        { type: 'text', text: prompt },
+      ]
       res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -42,10 +42,10 @@ export async function callAI(prompt, settings, imageBase64 = null, signal = null
       // AIza keys and new AQ. keys — do NOT use Authorization: Bearer, which
       // Google treats as an OAuth access token and rejects with 401.
       // gemini-1.5-flash was retired (404s); 2.5-flash is the current model.
-      const parts = [{ text: prompt }]
-      if (imageBase64) {
-        parts.push({ inline_data: { mime_type: 'image/jpeg', data: imageBase64 } })
-      }
+      const parts = [
+        { text: prompt },
+        ...images.map(data => ({ inline_data: { mime_type: 'image/jpeg', data } })),
+      ]
       res = await fetch(
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
         {
