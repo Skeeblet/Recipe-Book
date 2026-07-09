@@ -244,14 +244,16 @@ footer { background: var(--brown-dark); color: #8C7060; text-align: center; padd
 .modal-body { padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; max-height: 75vh; overflow-y: auto; overflow-x: hidden; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 20px 28px; border-top: 1px solid var(--border); }
 
-/* Form: AI "change something" */
-.form-ai-modify { display: flex; flex-direction: column; gap: 8px; padding-bottom: 16px; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
-.form-ai-btn { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; background: transparent; color: var(--brown-mid); border: 1.5px dashed var(--border); border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-.form-ai-btn:hover { border-color: var(--brown-light); border-style: solid; background: var(--card-bg); }
+/* Form: AI "change something" — trigger lives in the footer next to Save */
+.form-ai-btn { margin-right: auto; display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; background: transparent; color: var(--brown-mid); border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.form-ai-btn:hover { border-color: var(--brown-light); background: var(--card-bg); }
+.form-ai-btn.active { border-color: var(--accent); color: var(--accent); background: var(--card-bg); }
 .form-ai-btn svg { flex-shrink: 0; }
-.form-ai-input { width: 100%; padding: 9px 12px; border: 1.5px solid var(--brown-light); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; color: var(--text-body); background: var(--cream); outline: none; box-sizing: border-box; }
+/* Input bar sits just above the footer, near its trigger */
+.form-ai-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 28px; border-top: 1px solid var(--border); background: var(--card-bg); }
+.form-ai-input { flex: 1; min-width: 0; padding: 9px 12px; border: 1.5px solid var(--brown-light); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; color: var(--text-body); background: var(--warm-white); outline: none; box-sizing: border-box; }
 .form-ai-input:focus { border-color: var(--accent); }
-.form-ai-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.form-ai-error { flex-basis: 100%; margin-top: 4px; }
 
 /* Form elements */
 .form-group { display: flex; flex-direction: column; gap: 8px; }

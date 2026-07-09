@@ -1,9 +1,10 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { COLOR_PALETTE } from '../hooks/useTags.js'
 import { parseNotesToArray } from '../utils/parseNotes.js'
 import { callAI, extractJson } from '../utils/aiClient.js'
 import { normalizeImportedRecipe } from '../utils/importRecipe.js'
 import { buildModifyPrompt } from '../utils/recipeAI.js'
+import AutoExpandTextarea from './AutoExpandTextarea.jsx'
 
 function SparkleIcon() {
   return (
@@ -12,17 +13,6 @@ function SparkleIcon() {
       <path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z" />
     </svg>
   )
-}
-
-function AutoExpandTextarea({ value, onChange, ...props }) {
-  const ref = useRef(null)
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = el.scrollHeight + 'px'
-  }, [value])
-  return <textarea ref={ref} value={value} onChange={onChange} {...props} />
 }
 
 function parseTimeToFormState(str) {
@@ -135,6 +125,17 @@ export default function RecipeForm({ recipe, allTags, onAddTag, onSubmit, onClos
   const canUseAI = !!settings?.aiApiKey
 
   useEffect(() => () => { if (aiAbortRef.current) aiAbortRef.current.abort() }, [])
+
+  function toggleAi() {
+    if (aiOpen) {
+      if (aiAbortRef.current) aiAbortRef.current.abort()
+      setAiOpen(false)
+      setAiError('')
+    } else {
+      setAiOpen(true)
+      setAiError('')
+    }
+  }
 
   async function runAiModify() {
     const instruction = aiText.trim()
@@ -267,43 +268,6 @@ export default function RecipeForm({ recipe, allTags, onAddTag, onSubmit, onClos
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
 
-            {canUseAI && (
-              <div className="form-ai-modify">
-                {aiOpen ? (
-                  <>
-                    <input
-                      type="text"
-                      className="form-ai-input"
-                      value={aiText}
-                      onChange={e => { setAiText(e.target.value); setAiError('') }}
-                      placeholder="e.g. make it vegan, double the servings, add a garlic butter sauce"
-                      disabled={aiBusy}
-                      autoFocus
-                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); runAiModify() } }}
-                    />
-                    <div className="form-ai-actions">
-                      <button
-                        type="button"
-                        className="btn-secondary btn-sm"
-                        disabled={aiBusy}
-                        onClick={() => { if (aiAbortRef.current) aiAbortRef.current.abort(); setAiOpen(false); setAiText(''); setAiError('') }}
-                      >
-                        Cancel
-                      </button>
-                      <button type="button" className="btn-primary btn-sm" onClick={runAiModify} disabled={aiBusy}>
-                        {aiBusy ? 'Thinking…' : 'Apply'}
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <button type="button" className="form-ai-btn" onClick={() => { setAiOpen(true); setAiError('') }}>
-                    <SparkleIcon /> Ask AI to change something
-                  </button>
-                )}
-                {aiError && <div className="import-error">{aiError}</div>}
-              </div>
-            )}
-
             <div className="form-group">
               <label>Recipe name *</label>
               <input type="text" value={form.title}
@@ -314,7 +278,7 @@ export default function RecipeForm({ recipe, allTags, onAddTag, onSubmit, onClos
 
             <div className="form-group">
               <label>Description</label>
-              <input type="text" value={form.description}
+              <AutoExpandTextarea className="auto-expand" rows={1} value={form.description}
                 onChange={e => setField('description', e.target.value)}
                 placeholder="Brief description of the recipe" />
             </div>
@@ -547,7 +511,36 @@ export default function RecipeForm({ recipe, allTags, onAddTag, onSubmit, onClos
             </div>
 
           </div>
+
+          {canUseAI && aiOpen && (
+            <div className="form-ai-bar">
+              <input
+                type="text"
+                className="form-ai-input"
+                value={aiText}
+                onChange={e => { setAiText(e.target.value); setAiError('') }}
+                placeholder="e.g. make it vegan, double the servings, add a garlic butter sauce"
+                disabled={aiBusy}
+                autoFocus
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); runAiModify() } }}
+              />
+              <button type="button" className="btn-primary btn-sm" onClick={runAiModify} disabled={aiBusy}>
+                {aiBusy ? 'Thinking…' : 'Apply'}
+              </button>
+              {aiError && <div className="import-error form-ai-error">{aiError}</div>}
+            </div>
+          )}
+
           <div className="modal-footer">
+            {canUseAI && (
+              <button
+                type="button"
+                className={`form-ai-btn${aiOpen ? ' active' : ''}`}
+                onClick={toggleAi}
+              >
+                <SparkleIcon /> Ask AI
+              </button>
+            )}
             <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn-primary">{recipe?.id ? 'Save changes' : 'Add recipe'}</button>
           </div>
