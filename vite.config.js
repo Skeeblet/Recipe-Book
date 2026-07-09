@@ -4,6 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync } from 'fs'
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
+// Version shown in-app (App info, feedback emails). Bumped on every deploy by
+// scripts/bump-version.mjs (predeploy), which rolls the patch into the minor.
+
 export default defineConfig({
   base: '/Recipe-Book/',
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
