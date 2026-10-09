@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import Cover from './components/Cover.jsx'
 import FilterBar from './components/FilterBar.jsx'
 import RecipeCard from './components/RecipeCard.jsx'
 import RecipeDetail from './components/RecipeDetail.jsx'
 import RecipeForm from './components/RecipeForm.jsx'
 import GroceryList from './components/GroceryList.jsx'
 import ImportModal from './components/ImportModal.jsx'
-import Settings from './components/Settings.jsx'
-import AuthButton from './components/AuthButton.jsx'
+import Drawer from './components/Drawer.jsx'
 import ConflictModal from './components/ConflictModal.jsx'
 import UpdateToast from './components/UpdateToast.jsx'
 import ShareToast from './components/ShareToast.jsx'
@@ -229,7 +227,8 @@ export default function App() {
   const [formState, setFormState] = useState({ open: false, recipe: null })
 
   const [importState, setImportState] = useState({ open: false, method: null, prefill: '' })
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  // Active section. Phones show Grocery/Profile as full-screen tabs under the
+  // bottom nav; desktop opens them as side drawers from the header.
   const [mobileTab, setMobileTab] = useState('recipes')
   const [profileInitialPage, setProfileInitialPage] = useState(null)
 
@@ -285,7 +284,6 @@ export default function App() {
       maybeAutoNutrition(newRecipe)
     }
     setFormState({ open: false, recipe: null })
-    setSettingsOpen(false)
   }
 
   function closeImport() {
@@ -485,29 +483,24 @@ export default function App() {
 
   return (
     <>
-      <Cover totalRecipes={recipes.length} />
-      {mobileTab === 'recipes' && (
-        <FilterBar
-          allTags={allTags}
-          activeTags={activeTags}
-          onTagChange={toggleTag}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          onAddRecipe={() => setFormState({ open: true, recipe: null })}
-          onImportRecipe={() => setImportState({ open: true, method: null, prefill: '' })}
-
-          onOpenSettings={() => setSettingsOpen(true)}
-          onOpenTagSettings={() => { setProfileInitialPage('tags'); setMobileTab('profile') }}
-          authUser={user}
-          authLoading={authLoading}
-          onSignIn={signIn}
-          onSignOut={handleSignOut}
-          cardMode={settings.cardMode}
-          onCardModeChange={mode => setSetting('cardMode', mode)}
-        />
-      )}
+      {/* Header: always mounted (desktop keeps it under open drawers); CSS
+          hides it on phones while another tab is active. */}
+      <FilterBar
+        allTags={allTags}
+        activeTags={activeTags}
+        onTagChange={toggleTag}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        onImportRecipe={() => setImportState({ open: true, method: null, prefill: '' })}
+        onOpenTagSettings={() => { setProfileInitialPage('tags'); setMobileTab('profile') }}
+        cardMode={settings.cardMode}
+        onCardModeChange={mode => setSetting('cardMode', mode)}
+        activeTab={mobileTab}
+        onTabChange={handleTabChange}
+        groceryCount={uncheckedGroceryCount}
+      />
       <div className={`recipes-container${mobileTab !== 'recipes' ? ' hide-mobile' : ''}`}>
         {recipes.length === 0 ? (
           <WelcomeState
@@ -562,7 +555,6 @@ export default function App() {
           </>
         )}
       </div>
-      <footer>My Meal Prep Recipe Box &nbsp;·&nbsp; 1,200 cal/day plan &nbsp;·&nbsp; Built with Claude</footer>
 
       {selectedRecipe && (
         <RecipeDetail
@@ -608,30 +600,8 @@ export default function App() {
         />
       )}
 
-      {settingsOpen && (
-        <Settings
-          allTags={allTags}
-          customTags={customTags}
-          recipes={recipes}
-          settings={settings}
-          onSettingChange={setSetting}
-          onEditTag={editTag}
-          onDeleteTag={(slug) => {
-            recipes.forEach(r => {
-              if (r.tags.includes(slug)) {
-                updateRecipe(r.id, { ...r, tags: r.tags.filter(t => t !== slug) })
-              }
-            })
-            deleteTag(slug)
-            if (user) deleteTagDoc(db, user.uid, slug).catch(console.error)
-          }}
-          onEditRecipe={(recipe) => setFormState({ open: true, recipe })}
-          onDeleteRecipe={(id) => handleDelete(id)}
-          onClose={() => setSettingsOpen(false)}
-        />
-      )}
-
-{mobileTab === 'grocery' && (
+      {mobileTab === 'grocery' && (
+        <Drawer title="Grocery List" onClose={() => setMobileTab('recipes')}>
         <GroceryList
           items={groceryItems}
           onToggle={toggleItem}
@@ -649,9 +619,11 @@ export default function App() {
             }
           }}
         />
+        </Drawer>
       )}
 
       {mobileTab === 'profile' && (
+        <Drawer title="Profile" onClose={() => setMobileTab('recipes')}>
         <ProfilePage
           initialPage={profileInitialPage}
           onInitialPageConsumed={() => setProfileInitialPage(null)}
@@ -675,6 +647,7 @@ export default function App() {
           }}
           pwa={{ updateAvailable, onApplyUpdate: applyUpdate, onCheckUpdate: checkForUpdate }}
         />
+        </Drawer>
       )}
 
       {formState.open && (

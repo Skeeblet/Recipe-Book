@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import AuthButton from './AuthButton.jsx'
+import { GroceryIcon, ProfileIcon } from './NavIcons.jsx'
 
 // ── View mode icons ───────────────────────────────────────────────────────────
 
@@ -110,11 +110,10 @@ export default function FilterBar({
   allTags, activeTags, onTagChange,
   searchQuery, onSearchChange,
   sortBy, onSortChange,
-  onAddRecipe, onImportRecipe,
-
-  onOpenSettings, onOpenTagSettings,
-  authUser, authLoading, onSignIn, onSignOut,
+  onImportRecipe, onOpenTagSettings,
   cardMode, onCardModeChange,
+  // Section nav (desktop header buttons; phones use BottomNav instead)
+  activeTab, onTabChange, groceryCount = 0,
 }) {
   function cycleView() {
     const next = VIEW_MODES[(VIEW_MODES.indexOf(cardMode) + 1) % VIEW_MODES.length]
@@ -182,14 +181,23 @@ export default function FilterBar({
   function handleTagChange(tag) { onTagChange(tag) } // keep panel open for multi-select
   function handleSortChange(val) { onSortChange(val); setMobileSortOpen(false) }
 
-  return (
-    <div ref={filterBarRef} className="filter-bar">
+  // Desktop drawer buttons toggle: tapping the open section closes it.
+  function toggleSection(id) { onTabChange?.(activeTab === id ? 'recipes' : id) }
 
-      {/* ── Mobile layout (≤768px via CSS) ── */}
+  return (
+    <div ref={filterBarRef} className={`filter-bar${activeTab && activeTab !== 'recipes' ? ' filter-bar--inactive' : ''}`}>
+
       <div className="filter-bar-mobile">
 
         {/* Icon row — always visible */}
         <div className="mobile-icon-row">
+          <img
+            className="header-logo desktop-only"
+            src={`${import.meta.env.BASE_URL}favicon.svg`}
+            alt="My Recipe Box"
+            width="28"
+            height="28"
+          />
           <button
             className={`mobile-icon-btn${(mobileSearchOpen || searchQuery) ? ' active' : ''}`}
             onClick={() => { setMobileSearchOpen(v => !v); setMobileTagsOpen(false); setMobileSortOpen(false) }}
@@ -214,8 +222,29 @@ export default function FilterBar({
           <button className="mobile-icon-btn" onClick={cycleView} aria-label="Switch view">
             <ViewIcon />
           </button>
+          <span className="mobile-icon-spacer" />
           <button className="mobile-icon-btn" onClick={onImportRecipe} aria-label="Add or import recipe">
             <PlusIcon />
+          </button>
+          {/* Desktop only (≥769px): Grocery and Profile open as side drawers */}
+          <button
+            className={`mobile-icon-btn desktop-only${activeTab === 'grocery' ? ' active' : ''}`}
+            onClick={() => toggleSection('grocery')}
+            aria-label="Grocery list"
+            title="Grocery list"
+          >
+            <span className="nav-icon-wrap">
+              <GroceryIcon />
+              {groceryCount > 0 && <span className="nav-badge">{groceryCount}</span>}
+            </span>
+          </button>
+          <button
+            className={`mobile-icon-btn desktop-only${activeTab === 'profile' ? ' active' : ''}`}
+            onClick={() => toggleSection('profile')}
+            aria-label="Profile and settings"
+            title="Profile and settings"
+          >
+            <ProfileIcon />
           </button>
         </div>
 
@@ -305,67 +334,6 @@ export default function FilterBar({
             )}
           </div>
         )}
-      </div>
-
-      {/* ── Desktop / tablet layout (≥769px via CSS) ── */}
-      <div className="filter-bar-desktop">
-        <div className="filter-bar-top">
-          <div>
-            <div className="filter-label">Filter by tag</div>
-            {allTags.length === 0 ? (
-                <div className="filter-tags-empty">
-                  No tags yet.{' '}
-                  <button className="filter-tags-empty-btn" onClick={onOpenTagSettings}>Create one</button>
-                </div>
-              ) : (
-              <div className="filter-tags">
-              {allTags.map(({ tag, label, color }) => {
-                const isActive = activeTags.includes(tag)
-                return (
-                  <span
-                    key={tag}
-                    className={`ftag${isActive ? ' active' : ''}`}
-                    style={isActive
-                      ? { background: color.text, color: 'white', borderColor: color.text }
-                      : { color: color.text, borderColor: color.bg }
-                    }
-                    onClick={() => onTagChange(tag)}
-                  >
-                    <span className="dot" />
-                    {label}
-                  </span>
-                )
-              })}
-            </div>
-            )}
-          </div>
-          <div className="filter-bar-actions">
-            <AuthButton user={authUser} authLoading={authLoading} onSignIn={onSignIn} onSignOut={onSignOut} />
-
-            <button className="import-recipe-btn" onClick={onImportRecipe}>Import</button>
-            <button className="add-recipe-btn" onClick={onAddRecipe}>+ Add Recipe</button>
-            <button className="settings-btn" onClick={onOpenSettings} title="Settings">⚙</button>
-          </div>
-        </div>
-        <div className="search-row">
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search recipes, ingredients..."
-            value={searchQuery}
-            onChange={e => onSearchChange(e.target.value)}
-          />
-          <select
-            className="sort-select"
-            value={sortBy}
-            onChange={e => onSortChange(e.target.value)}
-            aria-label="Sort recipes"
-          >
-            {SORT_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
     </div>
