@@ -1,15 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import { readFileSync } from 'fs'
-const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
+import { getAppVersion } from './scripts/app-version.mjs'
 
-// Version shown in-app (App info, feedback emails). Bumped on every deploy by
-// scripts/bump-version.mjs (predeploy), which rolls the patch into the minor.
+// Version shown in-app (App info, feedback emails). Derived from git at build
+// time — see scripts/app-version.mjs — so CI deploys get a new number without
+// anyone committing a bump.
+const appVersion = getAppVersion()
+console.log(`App version: ${appVersion}`)
 
 export default defineConfig({
   base: '/Recipe-Book/',
-  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+  define: { __APP_VERSION__: JSON.stringify(appVersion) },
   plugins: [
     react(),
     VitePWA({

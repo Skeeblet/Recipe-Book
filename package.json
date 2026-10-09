@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "predeploy": "node scripts/bump-version.mjs && npm run build",
+    "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "generate:icons": "node scripts/generate-icons.mjs"
   },

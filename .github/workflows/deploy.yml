@@ -15,6 +15,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          # Full history: the in-app version is derived from the commit count
+          # (scripts/app-version.mjs); a shallow clone would freeze it.
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
