@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { scaleAmount, parseServingBase, parseServingUnit } from '../utils/scaleAmount.js'
+import { scaleAmount, parseServingBase, formatServingLabel } from '../utils/scaleAmount.js'
 import ConfirmDialog from './ConfirmDialog.jsx'
 import AIToolsModal from './AIToolsModal.jsx'
 
@@ -10,7 +10,6 @@ export default function RecipeDetail({
   settings, onApplyAIUpdate, onOpenAISettings,
 }) {
   const baseServings = parseServingBase(recipe.servingLabel)
-  const servingUnit  = parseServingUnit(recipe.servingLabel)
   const [servings, setServings] = useState(baseServings)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [sharedName, setSharedName] = useState(recipe.title)
@@ -145,7 +144,7 @@ export default function RecipeDetail({
               <span>Ingredients</span>
               <div className="serving-controls">
                 <button className="serving-btn" onClick={() => setServings(s => Math.max(1, s - 1))} disabled={servings <= 1}>−</button>
-                <span className="serving-count">{servings} {servingUnit}</span>
+                <span className="serving-count">{formatServingLabel(recipe.servingLabel, servings)}</span>
                 <button className="serving-btn" onClick={() => setServings(s => s + 1)}>+</button>
               </div>
             </div>

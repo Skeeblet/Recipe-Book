@@ -271,10 +271,10 @@ html[data-theme="dark"] .recipe-card { box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 .new-tag-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .btn-sm { padding: 5px 12px !important; font-size: 0.8125rem !important; }
 .ingredient-row, .step-row, .stat-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px; }
-.ingredient-row input[type="text"] { flex: 1; }
-.amount-input { max-width: 110px !important; flex: none !important; }
+.ingredient-row input[type="text"] { flex: 1; min-width: 0; }
+.amount-input { max-width: 110px !important; flex: 0 1 110px !important; min-width: 64px; }
 .step-row-num { width: 25px; height: 25px; border-radius: 50%; border: 1.5px solid var(--brown-light); color: var(--brown-mid); font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 8px; }
-.step-row textarea { flex: 1; }
+.step-row textarea { flex: 1; min-width: 0; }
 .auto-expand { overflow: hidden; resize: none !important; }
 .note-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
 .note-fields { display: flex; flex-direction: column; gap: 4px; flex: 1; }
@@ -287,7 +287,7 @@ html[data-theme="dark"] .recipe-card { box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 .stat-color-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid; cursor: pointer; padding: 0; display: block; transition: transform 0.1s; }
 .stat-color-btn:hover { transform: scale(1.15); }
 .stat-color-popup { position: absolute; top: 28px; left: 0; background: var(--warm-white); border: 1.5px solid var(--border); border-radius: 10px; padding: 10px; z-index: 300; box-shadow: 0 4px 16px rgba(44,31,20,0.18); width: 174px; }
-.stat-value-input { width: 62px !important; flex: none !important; min-width: 0 !important; padding-left: 8px !important; padding-right: 8px !important; }
+.stat-value-input { width: 76px !important; flex: none !important; min-width: 0 !important; padding-left: 8px !important; padding-right: 8px !important; }
 .stat-label-area { display: flex; gap: 6px; flex: 1; min-width: 0; }
 .stat-label-area select { flex: none; }
 .stat-label-area input { flex: 1; min-width: 0; }
@@ -558,6 +558,15 @@ html[data-theme="dark"] .recipe-card { box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
 @media (max-width: 480px) {
   .recipes-container { padding: 0 16px; }
+  .modal-overlay:not(.modal-overlay--sheet) { padding: 12px; }
+  .modal-overlay:not(.modal-overlay--sheet) .modal { display: flex; flex-direction: column; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); }
+  .modal-overlay:not(.modal-overlay--sheet) .modal > form { display: flex; flex-direction: column; min-height: 0; }
+  .modal-overlay:not(.modal-overlay--sheet) .modal-body { max-height: none; flex: 1 1 auto; min-height: 0; }
+  .modal-header { padding: 18px 20px 14px; }
+  .modal-body { padding: 18px 20px; }
+  .modal-footer { padding: 14px 16px; gap: 8px; }
+  .modal-footer .btn-primary, .modal-footer .btn-secondary, .form-ai-btn { padding: 9px 12px; font-size: 0.8125rem; white-space: nowrap; }
+  .form-ai-bar { padding: 12px 16px; }
 }
 
 /* Narrow phones: the recipe detail header (Back + 5 action pills) overflows
@@ -577,43 +586,46 @@ html[data-theme="dark"] .recipe-card { box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 .auth-btn:hover { opacity: 0.88; }
 
 /* Share toast */
+.toast-stack {
+  position: fixed; bottom: 80px; left: 16px; right: 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  z-index: 9999; pointer-events: none;
+}
+.toast-stack > * { pointer-events: auto; }
 .share-toast {
-  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
   background: var(--brown-dark); color: var(--cream);
   padding: 12px 24px; border-radius: 24px;
   font-size: 0.875rem; font-weight: 500;
   box-shadow: 0 4px 16px rgba(44,31,20,0.25);
-  z-index: 9999; white-space: nowrap;
+  white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
   animation: toast-in 0.2s ease;
 }
 
 /* Grocery bulk-add undo toast */
 .grocery-bulk-toast {
-  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
   background: var(--brown-dark); color: var(--cream);
   padding: 12px 20px; border-radius: 24px;
   font-size: 0.875rem; font-weight: 500; cursor: pointer;
   box-shadow: 0 4px 16px rgba(44,31,20,0.25);
-  z-index: 9999; white-space: nowrap;
+  white-space: nowrap;
   animation: toast-in 0.2s ease;
-  max-width: calc(100vw - 32px);
+  max-width: 100%;
 }
 .grocery-bulk-toast:hover { opacity: 0.9; }
 .grocery-bulk-toast-undo { text-decoration: underline; opacity: 0.85; }
 
 /* Update toast */
 .update-toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
   background: var(--brown-dark); color: var(--cream);
   padding: 12px 24px; border-radius: 24px;
   font-size: 0.875rem; font-weight: 500; cursor: pointer;
   box-shadow: 0 4px 16px rgba(44,31,20,0.25);
-  z-index: 9999; white-space: nowrap;
+  white-space: nowrap;
   animation: toast-in 0.2s ease;
 }
 @keyframes toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Conflict modal */
@@ -990,6 +1002,7 @@ html[data-theme="dark"] .compact-card { box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
 }
 .compact-card--expanded { border-color: var(--brown-light); box-shadow: 0 4px 14px rgba(44,31,20,0.09); }
 .compact-card-header { padding: 12px 14px 8px; border-bottom: 1px solid var(--border); }
+.compact-card .recipe-desc-row { flex-direction: column; align-items: flex-start; gap: 4px; }
 .compact-card-title {
   font-family: 'Playfair Display', serif;
   font-size: 0.9375rem; font-weight: 600;

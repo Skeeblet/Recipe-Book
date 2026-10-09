@@ -134,3 +134,12 @@ export function parseServingBase(label) {
 export function parseServingUnit(label) {
   return (label || '').replace(/^\d+\s*/, '').trim() || 'serving'
 }
+
+// Label for a scaled serving count. Replaces the number wherever it sits in
+// the label ("Makes 4 servings" → "Makes 5 servings"); labels with no number
+// get the count prefixed ("per jar" → "5 per jar").
+export function formatServingLabel(label, servings) {
+  const text = (label || '').trim()
+  if (/\d+/.test(text)) return text.replace(/\d+/, servings)
+  return `${servings} ${text || 'serving'}`
+}

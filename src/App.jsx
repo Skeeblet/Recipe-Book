@@ -695,13 +695,16 @@ export default function App() {
         <ConflictModal conflicts={conflicts} onResolve={handleConflictResolve} />
       )}
 
-      <UpdateToast visible={updateAvailable} onApply={applyUpdate} />
-      <ShareToast message={toastMsg} onDismiss={() => setToastMsg(null)} />
-      <GroceryBulkToast
-        info={bulkAddUndo}
-        onUndo={(ids) => { removeItems(ids); syncGroceryDeletions(ids); setBulkAddUndo(null) }}
-        onDismiss={() => setBulkAddUndo(null)}
-      />
+      {/* Toasts stack above the bottom nav instead of piling onto one spot */}
+      <div className="toast-stack">
+        <UpdateToast visible={updateAvailable} onApply={applyUpdate} />
+        <ShareToast message={toastMsg} onDismiss={() => setToastMsg(null)} />
+        <GroceryBulkToast
+          info={bulkAddUndo}
+          onUndo={(ids) => { removeItems(ids); syncGroceryDeletions(ids); setBulkAddUndo(null) }}
+          onDismiss={() => setBulkAddUndo(null)}
+        />
+      </div>
 
       <BottomNav
         activeTab={mobileTab}

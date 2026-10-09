@@ -41,10 +41,11 @@ export default function OverflowTagList({ tags, allTags }) {
       }
     }
 
-    // Pull back one slot to leave room for the badge
+    // Pull back one slot to leave room for the badge, but always keep at
+    // least one tag visible — a lone "+6" chip tells the reader nothing.
     setCutoff(
       firstOverflow < tagEls.length
-        ? Math.max(0, firstOverflow - 1)
+        ? Math.max(1, firstOverflow - 1)
         : sorted.length
     )
   }, [cutoff]) // eslint-disable-line react-hooks/exhaustive-deps

@@ -72,6 +72,9 @@ export async function callAI(prompt, settings, imageBase64 = null, signal = null
     if (res.status === 429) {
       throw new Error('The AI service is rate-limiting — wait a minute and try again.')
     }
+    if (res.status === 503 || res.status === 529) {
+      throw new Error('The AI service is overloaded right now — try again in a minute.')
+    }
     throw new Error('The AI service returned an error. Try again in a moment.')
   }
 
