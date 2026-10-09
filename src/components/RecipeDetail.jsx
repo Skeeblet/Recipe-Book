@@ -229,7 +229,9 @@ export default function RecipeDetail({
       {confirmDelete && (
         <ConfirmDialog
           message={`Delete "${recipe.title}"? This cannot be undone.`}
-          onConfirm={() => { onDelete(); onBack() }}
+          // onDelete (App.handleDelete) already pops the detail's history entry;
+          // calling onBack here too went back one page further and left the app.
+          onConfirm={onDelete}
           onCancel={() => setConfirmDelete(false)}
           centered
         />
