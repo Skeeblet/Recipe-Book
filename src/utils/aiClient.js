@@ -41,13 +41,14 @@ export async function callAI(prompt, settings, imageBase64 = null, signal = null
       // Default: Gemini. The x-goog-api-key header authenticates both legacy
       // AIza keys and new AQ. keys — do NOT use Authorization: Bearer, which
       // Google treats as an OAuth access token and rejects with 401.
-      // gemini-1.5-flash was retired (404s); 2.5-flash is the current model.
+      // gemini-1.5-flash and 2.5-flash were retired (404s); 3.8-flash is the
+      // current model.
       const parts = [
         { text: prompt },
         ...images.map(data => ({ inline_data: { mime_type: 'image/jpeg', data } })),
       ]
       res = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
         {
           method: 'POST',
           headers: {

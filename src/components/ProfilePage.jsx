@@ -183,10 +183,10 @@ function AIPage({ data, handlers, onBack }) {
             <span className="ps-label">AI model</span>
             <select
               className="ps-select"
-              value={settings.aiModel || 'gemini-2.5-flash'}
+              value={settings.aiModel || 'gemini-3.8-flash'}
               onChange={e => onSettingChange('aiModel', e.target.value)}
             >
-              <option value="gemini-2.5-flash">Gemini 2.5 Flash (free)</option>
+              <option value="gemini-3.8-flash">Gemini 3.8 Flash (free)</option>
               <option value="claude-sonnet">Claude Sonnet</option>
             </select>
           </div>
@@ -200,13 +200,6 @@ function AIPage({ data, handlers, onBack }) {
               ? 'Get a Claude API key at console.anthropic.com ↗'
               : 'Get a free Gemini API key at aistudio.google.com ↗'}
           </a>
-          {!isClaude && (
-            <span className="ps-model-warning">
-              ⚠ Google retires Gemini 2.5 Flash on October 16, 2026. AI features will
-              need an app update around then — if imports stop working, check for a
-              new version.
-            </span>
-          )}
         </div>
 
         <div className="ps-row">

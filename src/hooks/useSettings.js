@@ -1,12 +1,14 @@
 import { useState } from 'react'
 
 const STORAGE_KEY = 'app-settings'
-const DEFAULTS = { smartUnits: true, cardMode: 'deck', aiModel: 'gemini-2.5-flash', aiApiKey: '', autoNutrition: true, fontSize: 'medium', theme: 'system' }
+const DEFAULTS = { smartUnits: true, cardMode: 'deck', aiModel: 'gemini-3.8-flash', aiApiKey: '', autoNutrition: true, fontSize: 'medium', theme: 'system' }
 
 // Settings saved (locally or in the cloud) before a model retirement may
 // reference dead model ids — map them forward.
 function migrate(settings) {
-  if (settings.aiModel === 'gemini-1.5-flash') settings.aiModel = 'gemini-2.5-flash'
+  if (settings.aiModel === 'gemini-1.5-flash' || settings.aiModel === 'gemini-2.5-flash') {
+    settings.aiModel = 'gemini-3.8-flash'
+  }
   return settings
 }
 
