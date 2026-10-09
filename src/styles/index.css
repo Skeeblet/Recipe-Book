@@ -1238,3 +1238,64 @@ html:not([data-theme="light"]) .deck-card + .deck-card.deck-card--active {
 .card-mode-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 .card-mode-btn:not(.active):hover { border-color: var(--brown-light); color: var(--text-body); }
 
+
+/* ── Dietary restrictions ───────────────────────────────────── */
+/* Profile → Dietary page */
+.ps-dietary-intro { margin: 0 0 4px; line-height: 1.6; }
+.ps-dietary-chips { padding: 10px 4px 4px; }
+.dietary-chip--custom { gap: 6px; padding-right: 8px; }
+.dietary-chip-remove { background: none; border: none; color: inherit; font-size: 0.75rem; line-height: 1; padding: 2px 3px; cursor: pointer; opacity: 0.7; border-radius: 4px; }
+.dietary-chip-remove:hover { opacity: 1; background: rgba(0,0,0,0.08); }
+.ps-dietary-add-row { display: flex; align-items: center; gap: 8px; padding: 10px 4px 4px; }
+.ps-dietary-add-row .ps-input { max-width: 280px; }
+
+/* "Follow my dietary restrictions" toggle in Create with AI */
+.import-dietary-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 12px; background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 10px; }
+
+/* Conflict list (import popup + detail-page check) */
+.dietary-conflict-head { display: flex; align-items: center; justify-content: space-between; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+.dietary-select-all { background: none; border: none; padding: 0; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--accent); cursor: pointer; }
+.dietary-select-all:hover { text-decoration: underline; }
+.dietary-conflict-row { padding: 9px 2px; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+.dietary-conflict-row:last-child { border-bottom: none; }
+.dietary-conflict-main { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+.dietary-conflict-main .ps-assign-check { margin-top: 2px; }
+.dietary-conflict-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.dietary-conflict-swap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.dietary-conflict-swap .ai-diff-name { flex: 0 1 auto; }
+.dietary-conflict-old { text-decoration: line-through; opacity: 0.65; }
+.dietary-conflict-reason { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-muted); line-height: 1.5; }
+.dietary-clean { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: #EAF0E8; border: 1.5px solid #4A6741; border-radius: 10px; color: #4A6741; }
+.dietary-clean-icon { font-size: 1.25rem; font-weight: 700; }
+.dietary-clean-title { font-weight: 600; margin-bottom: 2px; }
+html[data-theme="dark"] .dietary-clean { background: rgba(74,103,65,0.25); color: #B9D3B0; }
+
+/* Welcome-screen question */
+.welcome-dietary { margin-top: 32px; padding: 18px 20px; background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 420px; }
+.welcome-dietary-title { margin: 0; font-weight: 600; color: var(--text-body); }
+.welcome-dietary-actions { display: flex; gap: 8px; margin-top: 6px; }
+
+/* Existing-user dropdown banner */
+.dietary-banner {
+  position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+  width: calc(100vw - 24px); max-width: 560px;
+  display: flex; align-items: center; gap: 14px;
+  background: var(--brown-dark); color: var(--cream);
+  padding: 12px 14px 12px 18px; border-radius: 14px;
+  font-size: 0.875rem; line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(44,31,20,0.3);
+  z-index: 9999;
+  animation: banner-down 0.3s ease;
+}
+.dietary-banner-text { flex: 1; min-width: 0; }
+.dietary-banner-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.dietary-banner-close { background: none; border: none; color: inherit; opacity: 0.7; font-size: 1rem; padding: 6px 8px; cursor: pointer; border-radius: 6px; }
+.dietary-banner-close:hover { opacity: 1; }
+@keyframes banner-down {
+  from { opacity: 0; transform: translateX(-50%) translateY(-16px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@media (max-width: 600px) {
+  .dietary-banner { flex-direction: column; align-items: stretch; gap: 10px; }
+  .dietary-banner-actions { justify-content: flex-end; }
+}

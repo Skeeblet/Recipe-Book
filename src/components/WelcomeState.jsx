@@ -1,5 +1,8 @@
 // First-run empty state: shown when the recipe list is completely empty.
-export default function WelcomeState({ onCreateFirst, authUser, authLoading, onSignIn }) {
+export default function WelcomeState({
+  onCreateFirst, authUser, authLoading, onSignIn,
+  showDietaryPrompt = false, onSetupDietary, onDismissDietary,
+}) {
   return (
     <div className="welcome-state">
       <div className="welcome-icon" aria-hidden="true">
@@ -18,6 +21,19 @@ export default function WelcomeState({ onCreateFirst, authUser, authLoading, onS
       <button className="btn-primary welcome-cta" onClick={onCreateFirst}>
         + Create your first recipe
       </button>
+
+      {showDietaryPrompt && (
+        <div className="welcome-dietary">
+          <p className="welcome-dietary-title">Any dietary restrictions?</p>
+          <p className="welcome-signin-text">
+            Tell us once and AI will flag conflicting ingredients whenever you add a recipe.
+          </p>
+          <div className="welcome-dietary-actions">
+            <button className="btn-primary btn-sm" onClick={onSetupDietary}>Set up</button>
+            <button className="btn-secondary btn-sm" onClick={onDismissDietary}>Not now</button>
+          </div>
+        </div>
+      )}
 
       {!authUser && (
         <div className="welcome-signin">

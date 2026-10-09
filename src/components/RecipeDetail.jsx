@@ -131,6 +131,11 @@ export default function RecipeDetail({
             <button className="ai-tool-btn" onClick={() => setAiMode('nutrition')}>
               <ScaleIcon /> Nutrition check
             </button>
+            {settings?.dietaryRestrictions?.length > 0 && (
+              <button className="ai-tool-btn" onClick={() => setAiMode('dietary')}>
+                <LeafIcon /> Dietary check
+              </button>
+            )}
           </div>
         )}
 
@@ -242,6 +247,15 @@ export default function RecipeDetail({
         />
       )}
     </div>
+  )
+}
+
+function LeafIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 20 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z" />
+      <path d="M2 21c0-3 1.9-5.5 5-7" />
+    </svg>
   )
 }
 

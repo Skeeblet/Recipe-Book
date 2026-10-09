@@ -18,6 +18,7 @@ import MasonryGrid from './components/MasonryGrid.jsx'
 import DeckGrid from './components/DeckGrid.jsx'
 import RecipeListEnd from './components/RecipeListEnd.jsx'
 import WelcomeState from './components/WelcomeState.jsx'
+import DietaryPromptBanner from './components/DietaryPromptBanner.jsx'
 import { usePWAUpdate } from './hooks/usePWAUpdate.js'
 import { useRecipes } from './hooks/useRecipes.js'
 import { useTags } from './hooks/useTags.js'
@@ -468,6 +469,20 @@ export default function App() {
 
   const uncheckedGroceryCount = groceryItems.filter(i => !i.checked).length
 
+  // One-time "set up dietary restrictions?" prompt. New users see it on the
+  // Welcome screen; existing users get a dropdown banner. Any answer or
+  // dismissal sets dietaryPromptSeen, which syncs with the account.
+  const showDietaryPrompt = !settings.dietaryPromptSeen && !(settings.dietaryRestrictions?.length)
+  // Signed-in users wait for the cloud pull so a flag set on another device
+  // suppresses the banner here too.
+  const dietaryPromptReady = authLoading ? false : user ? syncReady : true
+  function dismissDietaryPrompt() { setSetting('dietaryPromptSeen', true) }
+  function openDietarySetup() {
+    setSetting('dietaryPromptSeen', true)
+    setProfileInitialPage('dietary')
+    setMobileTab('profile')
+  }
+
   return (
     <>
       <Cover totalRecipes={recipes.length} />
@@ -500,6 +515,9 @@ export default function App() {
             authUser={user}
             authLoading={authLoading}
             onSignIn={signIn}
+            showDietaryPrompt={showDietaryPrompt && dietaryPromptReady}
+            onSetupDietary={openDietarySetup}
+            onDismissDietary={dismissDietaryPrompt}
           />
         ) : filteredRecipes.length === 0 ? (
           <div className="empty-state visible">No recipes match that filter.</div>
@@ -690,9 +708,14 @@ export default function App() {
           }}
           settings={settings}
           onClose={closeImport}
+          onToast={showToast}
           initialMethod={importState.method}
           prefill={importState.prefill}
         />
+      )}
+
+      {recipes.length > 0 && showDietaryPrompt && dietaryPromptReady && mobileTab === 'recipes' && !selectedRecipe && (
+        <DietaryPromptBanner onSetup={openDietarySetup} onDismiss={dismissDietaryPrompt} />
       )}
 
       {conflicts.length > 0 && (

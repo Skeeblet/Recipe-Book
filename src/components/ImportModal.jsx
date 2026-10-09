@@ -16,6 +16,13 @@ import {
   buildSocialPrompt,
   JSON_TEMPLATE,
 } from '../utils/importRecipe.js'
+import {
+  checkDietaryConflicts,
+  applySubstitutions,
+  dietaryPromptAddendum,
+  formatRestrictions,
+} from '../utils/dietary.js'
+import DietaryConflictModal from './DietaryConflictModal.jsx'
 
 // ── Tile icons ────────────────────────────────────────────────────────────────
 
@@ -153,16 +160,23 @@ export default function ImportModal({
   onOpenAISettings,
   settings,
   onClose,
+  onToast,
   initialMethod = null,
   prefill = '',
 }) {
-  const [step, setStep] = useState(initialMethod ? 'input' : 'picker') // picker | input | loading
+  const [step, setStep] = useState(initialMethod ? 'input' : 'picker') // picker | input | loading | conflict
   const [method, setMethod] = useState(initialMethod)
   const [input, setInput] = useState(prefill)
   const [error, setError] = useState('')
   const [needsKey, setNeedsKey] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [photos, setPhotos] = useState([]) // [{ file, url }] — multiple pages of one recipe
+  // Dietary restrictions: "Create with AI" can opt out of following them;
+  // every other route is checked after the fact (see finishWithDietaryCheck).
+  const [followDietary, setFollowDietary] = useState(true)
+  const [conflictState, setConflictState] = useState(null) // { result, conflicts }
+  const restrictions = settings?.dietaryRestrictions || []
+  const hasRestrictions = restrictions.length > 0
   const requestId = useRef(0)
   const abortRef = useRef(null)
   const userInteractedRef = useRef(false)
@@ -260,8 +274,53 @@ export default function ImportModal({
   }
 
   async function importGenerate(description, signal) {
-    const json = extractJson(await callAI(buildGeneratePrompt(description, existingTagSlugs), settings, null, signal))
+    let prompt = buildGeneratePrompt(description, existingTagSlugs)
+    if (hasRestrictions && followDietary) prompt += dietaryPromptAddendum(restrictions)
+    const json = extractJson(await callAI(prompt, settings, null, signal))
     return normalizeImportedRecipe(json)
+  }
+
+  // ── Dietary check ───────────────────────────────────────────────────────────
+
+  // Runs the AI dietary check on an import result and routes to the editable
+  // form, the auto-substitute path, or the conflict popup. A failed check never
+  // blocks the import — the recipe can be checked again from its detail page.
+  async function finishWithDietaryCheck(result, signal, id) {
+    const shouldCheck = hasRestrictions && settings?.aiApiKey && (method !== 'ai' || followDietary)
+    if (!shouldCheck) { onEditFirst(finalizeDraft(result)); return }
+    let conflicts = []
+    try {
+      setLoadingMsg('Checking dietary restrictions…')
+      conflicts = await checkDietaryConflicts(result, settings, signal)
+    } catch (e) {
+      if (e.name === 'AbortError') throw e
+      console.warn('Dietary check failed:', e)
+    }
+    if (id !== requestId.current) return
+    if (conflicts.length === 0) { onEditFirst(finalizeDraft(result)); return }
+    if (settings.autoSubstitute) {
+      const ingredients = applySubstitutions(result.ingredients, conflicts, conflicts.map(c => c.index))
+      onEditFirst(finalizeDraft({ ...result, ingredients }))
+      onToast?.(`Swapped ${conflicts.length} ingredient${conflicts.length !== 1 ? 's' : ''} for your dietary restrictions`)
+      return
+    }
+    setLoadingMsg('Waiting for your review…')
+    setConflictState({ result, conflicts })
+    setStep('conflict')
+  }
+
+  function resolveConflicts(selectedIndexes) {
+    const { result, conflicts } = conflictState
+    setConflictState(null)
+    const draft = selectedIndexes
+      ? { ...result, ingredients: applySubstitutions(result.ingredients, conflicts, selectedIndexes) }
+      : result
+    onEditFirst(finalizeDraft(draft))
+  }
+
+  function cancelConflicts() {
+    setConflictState(null)
+    setStep('input')
   }
 
   async function importPhoto(signal) {
@@ -343,19 +402,30 @@ export default function ImportModal({
       return
     }
 
-    if (method === 'json') {
-      try {
-        onEditFirst(finalizeDraft(importJson(input)))
-      } catch (e) {
-        setError(e.message)
-      }
-      return
-    }
-
     if (abortRef.current) abortRef.current.abort()
     const controller = new AbortController()
     abortRef.current = controller
     const id = ++requestId.current
+
+    if (method === 'json') {
+      let parsed
+      try {
+        parsed = importJson(input)
+      } catch (e) {
+        setError(e.message)
+        return
+      }
+      setStep('loading')
+      try {
+        await finishWithDietaryCheck(parsed, controller.signal, id)
+      } catch (e) {
+        if (e.name === 'AbortError' || id !== requestId.current) return
+        setError(e.message)
+        setStep('input')
+      }
+      return
+    }
+
     const linkType = method === 'link' ? detectLinkType(input) : null
     setLoadingMsg(
       method === 'ai' ? 'Generating recipe…'
@@ -375,7 +445,7 @@ export default function ImportModal({
       if (id !== requestId.current) return
       // Skip the summary review and open the full editable form so everything
       // (ingredients, steps, stats, tags) can be checked before saving.
-      onEditFirst(finalizeDraft(result))
+      await finishWithDietaryCheck(result, controller.signal, id)
       return
     } catch (e) {
       if (e.name === 'AbortError' || id !== requestId.current) return
@@ -582,6 +652,21 @@ export default function ImportModal({
                     placeholder='e.g. "a high protein chicken bowl under 600 calories"'
                     autoFocus
                   />
+                  {hasRestrictions && (
+                    <div className="import-dietary-row">
+                      <div className="ps-row-label">
+                        <span className="ps-label">Follow my dietary restrictions</span>
+                        <span className="ps-desc">{formatRestrictions(restrictions)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className={`toggle-btn${followDietary ? ' on' : ''}`}
+                        onClick={() => { userInteractedRef.current = true; setFollowDietary(f => !f) }}
+                        role="switch" aria-checked={followDietary}>
+                        <span className="toggle-knob" />
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -648,7 +733,7 @@ export default function ImportModal({
           </>
         )}
 
-        {step === 'loading' && (
+        {(step === 'loading' || step === 'conflict') && (
           <div className="modal-body">
             <div className="import-loading">
               <div className="import-spinner" />
@@ -658,6 +743,15 @@ export default function ImportModal({
           </div>
         )}
       </div>
+
+      {step === 'conflict' && conflictState && (
+        <DietaryConflictModal
+          conflicts={conflictState.conflicts}
+          onContinue={() => resolveConflicts(null)}
+          onReplace={resolveConflicts}
+          onCancel={cancelConflicts}
+        />
+      )}
     </div>
   )
 }

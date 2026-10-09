@@ -1,7 +1,15 @@
 import { useState } from 'react'
 
 const STORAGE_KEY = 'app-settings'
-const DEFAULTS = { smartUnits: true, cardMode: 'deck', aiModel: 'gemini-3.8-flash', aiApiKey: '', autoNutrition: true, fontSize: 'medium', theme: 'system' }
+const DEFAULTS = {
+  smartUnits: true, cardMode: 'deck', aiModel: 'gemini-3.8-flash', aiApiKey: '', autoNutrition: true,
+  fontSize: 'medium', theme: 'system',
+  // Dietary restrictions: preset labels and custom strings, checked by AI on import.
+  dietaryRestrictions: [],
+  autoSubstitute: false,
+  // Set once the user has seen (answered or dismissed) the "set up restrictions?" prompt.
+  dietaryPromptSeen: false,
+}
 
 // Settings saved (locally or in the cloud) before a model retirement may
 // reference dead model ids — map them forward.

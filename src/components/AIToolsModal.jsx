@@ -11,6 +11,13 @@ import {
   normalizeStatLabel,
   diffIngredients,
 } from '../utils/recipeAI.js'
+import {
+  buildDietaryCheckPrompt,
+  parseDietaryCheckResponse,
+  applySubstitutions,
+  formatRestrictions,
+} from '../utils/dietary.js'
+import DietaryConflictList from './DietaryConflictList.jsx'
 
 const GOALS = ['Lower carb', 'Higher protein', 'Keto', 'Vegan', 'Vegetarian', 'Low calorie', 'Gluten-free']
 
@@ -18,10 +25,13 @@ const API_KEY_MSG =
   'Add your Gemini API key in Profile → AI to use this feature. ' +
   'Gemini has a free tier — get a key at aistudio.google.com.'
 
-// mode: 'optimize' | 'nutrition'
+// mode: 'optimize' | 'nutrition' | 'dietary'
 export default function AIToolsModal({ mode, recipe, settings, onApply, onClose, onOpenAISettings }) {
   const isOptimize = mode === 'optimize'
+  const isDietary = mode === 'dietary'
+  const restrictions = settings?.dietaryRestrictions || []
   const [step, setStep] = useState(isOptimize ? 'goal' : 'loading') // goal | loading | review | error
+  const [selectedConflicts, setSelectedConflicts] = useState(() => new Set())
   const [goal, setGoal] = useState(null)
   const [customGoal, setCustomGoal] = useState('')
   const [error, setError] = useState('')
@@ -70,6 +80,18 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
     run(buildNutritionPrompt(recipe), parseNutritionResponse)
   }
 
+  function runDietary() {
+    run(buildDietaryCheckPrompt(recipe, restrictions), json => {
+      const conflicts = parseDietaryCheckResponse(json, recipe.ingredients)
+      setSelectedConflicts(new Set(conflicts.map(c => c.index)))
+      return conflicts
+    })
+  }
+
+  function runAuto() {
+    isDietary ? runDietary() : runNutrition()
+  }
+
   // Iterate on the current optimize result: feed the already-changed
   // ingredients back in with a further instruction. The review still diffs
   // against the original recipe, so the user sees the cumulative change.
@@ -81,21 +103,23 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
     run(buildOptimizePrompt(working, instruction), parseOptimizeResponse)
   }
 
-  // Nutrition check has no inputs — start as soon as the modal opens.
+  // Nutrition and dietary checks have no inputs — start as soon as the modal opens.
   useEffect(() => {
-    if (!isOptimize) runNutrition()
+    if (!isOptimize) runAuto()
     return () => { if (abortRef.current) abortRef.current.abort() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleApply() {
     if (isOptimize) {
       onApply({ ingredients: result.ingredients, stats: mergeStats(recipe.stats, result.stats) })
+    } else if (isDietary) {
+      onApply({ ingredients: applySubstitutions(recipe.ingredients, result, [...selectedConflicts]) })
     } else {
       onApply({ stats: mergeStats(recipe.stats, result) })
     }
   }
 
-  const title = isOptimize ? 'Optimize ingredients' : 'Nutrition check'
+  const title = isOptimize ? 'Optimize ingredients' : isDietary ? 'Dietary check' : 'Nutrition check'
   const diff = isOptimize && step === 'review' && result
     ? diffIngredients(recipe.ingredients, result.ingredients)
     : null
@@ -174,7 +198,7 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
             <div className="import-loading">
               <div className="import-spinner" />
               <div className="import-loading-msg">
-                {isOptimize ? 'Optimizing ingredients…' : 'Calculating nutrition…'}
+                {isOptimize ? 'Optimizing ingredients…' : isDietary ? 'Checking dietary restrictions…' : 'Calculating nutrition…'}
               </div>
               <button type="button" className="btn-secondary" onClick={handleClose}>Cancel</button>
             </div>
@@ -202,7 +226,7 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
             <div className="modal-footer">
               <button type="button" className="btn-secondary" onClick={handleClose}>Cancel</button>
               {!needsKey && (
-                <button type="button" className="btn-primary" onClick={runNutrition}>Try again</button>
+                <button type="button" className="btn-primary" onClick={runAuto}>Try again</button>
               )}
             </div>
           </>
@@ -261,7 +285,47 @@ export default function AIToolsModal({ mode, recipe, settings, onApply, onClose,
           </>
         )}
 
-        {step === 'review' && result && !isOptimize && (
+        {step === 'review' && result && isDietary && (
+          <>
+            <div className="modal-body">
+              {result.length === 0 ? (
+                <div className="dietary-clean">
+                  <span className="dietary-clean-icon" aria-hidden="true">✓</span>
+                  <div>
+                    <div className="dietary-clean-title">No conflicts found</div>
+                    <div className="ps-desc">This recipe fits: {formatRestrictions(restrictions)}</div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="import-hint">
+                    These ingredients conflict with your dietary restrictions. Select the ones to
+                    replace with substitutes.
+                  </p>
+                  <DietaryConflictList
+                    conflicts={result}
+                    selected={selectedConflicts}
+                    onChange={setSelectedConflicts}
+                  />
+                </>
+              )}
+            </div>
+            <div className="modal-footer">
+              {result.length === 0 ? (
+                <button type="button" className="btn-primary" onClick={handleClose}>Close</button>
+              ) : (
+                <>
+                  <button type="button" className="btn-secondary" onClick={handleClose}>Cancel</button>
+                  <button type="button" className="btn-primary" onClick={handleApply} disabled={selectedConflicts.size === 0}>
+                    Replace selected{selectedConflicts.size ? ` (${selectedConflicts.size})` : ''}
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        )}
+
+        {step === 'review' && result && !isOptimize && !isDietary && (
           <>
             <div className="modal-body">
               <p className="import-hint">

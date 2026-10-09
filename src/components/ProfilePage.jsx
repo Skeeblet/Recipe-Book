@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import ConfirmDialog from './ConfirmDialog.jsx'
 import { COLOR_PALETTE } from '../hooks/useTags.js'
+import { DIETARY_PRESETS } from '../utils/dietary.js'
 
 /* eslint-disable no-undef */
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '—'
@@ -24,9 +25,10 @@ export default function ProfilePage({ auth, data, handlers, pwa, initialPage, on
     return () => window.removeEventListener('popstate', onPopState)
   }, [!!activePage]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const subProps = { auth, data, handlers, pwa, onBack: () => window.history.back() }
+  const subProps = { auth, data, handlers, pwa, onBack: () => window.history.back(), onNavigate: setActivePage }
 
   if (activePage === 'ai') return <AIPage {...subProps} />
+  if (activePage === 'dietary') return <DietaryPage {...subProps} />
   if (activePage === 'recipes') return <RecipesPage {...subProps} />
   if (activePage === 'tags')    return <TagsPage    {...subProps} />
   if (activePage === 'display') return <DisplayPage {...subProps} />
@@ -75,7 +77,7 @@ function ProfileHub({ auth, onNavigate }) {
         <div className="ps-hub-group-label">Settings</div>
 
         <div className="ps-hub-rows">
-          {['AI', 'Recipes', 'Tags', 'Display', 'Feedback', 'App info'].map(label => (
+          {['AI', 'Dietary', 'Recipes', 'Tags', 'Display', 'Feedback', 'App info'].map(label => (
             <button
               key={label}
               className="ps-hub-nav-btn"
@@ -296,6 +298,123 @@ function ApiKeyModal({ currentKey, onSave, onClose }) {
       </div>
     </div>,
     document.body
+  )
+}
+
+/* ── Dietary sub-page ────────────────────────────────────────────── */
+const DIETARY_CHIP_COLOR = { bg: '#EAF0E8', text: '#4A6741' }
+
+function DietaryPage({ data, handlers, onBack, onNavigate }) {
+  const { settings } = data
+  const { onSettingChange } = handlers
+  const restrictions = settings.dietaryRestrictions || []
+  const hasKey = !!settings.aiApiKey
+  const [custom, setCustom] = useState('')
+
+  // Opening this page counts as having seen the setup prompt.
+  useEffect(() => {
+    if (!settings.dietaryPromptSeen) onSettingChange('dietaryPromptSeen', true)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const has = label => restrictions.some(r => r.toLowerCase() === label.toLowerCase())
+  const customItems = restrictions.filter(r => !DIETARY_PRESETS.some(p => p.toLowerCase() === r.toLowerCase()))
+
+  function togglePreset(label) {
+    onSettingChange('dietaryRestrictions', has(label)
+      ? restrictions.filter(r => r.toLowerCase() !== label.toLowerCase())
+      : [...restrictions, label])
+  }
+
+  function addCustom() {
+    const value = custom.trim()
+    if (!value) return
+    if (!has(value)) onSettingChange('dietaryRestrictions', [...restrictions, value])
+    setCustom('')
+  }
+
+  function remove(label) {
+    onSettingChange('dietaryRestrictions', restrictions.filter(r => r !== label))
+  }
+
+  return (
+    <SubPage title="Dietary" onBack={onBack}>
+      <p className="ps-desc ps-dietary-intro">
+        Tell the app what you can't or don't eat. When you import a recipe, AI checks the
+        ingredients against these and offers substitutes for anything that conflicts.
+      </p>
+
+      <div className="ps-section-label">Restrictions</div>
+      <div className="tag-picker ps-dietary-chips">
+        {DIETARY_PRESETS.map(label => {
+          const selected = has(label)
+          return (
+            <button
+              key={label}
+              type="button"
+              className={`tag-pill${selected ? ' selected' : ''}`}
+              style={selected
+                ? { background: DIETARY_CHIP_COLOR.bg, color: DIETARY_CHIP_COLOR.text, borderColor: DIETARY_CHIP_COLOR.text }
+                : { background: 'transparent', color: DIETARY_CHIP_COLOR.text, borderColor: DIETARY_CHIP_COLOR.bg }}
+              onClick={() => togglePreset(label)}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="ps-section-label">Custom</div>
+      {customItems.length > 0 && (
+        <div className="tag-picker ps-dietary-chips">
+          {customItems.map(label => (
+            <span
+              key={label}
+              className="tag-pill selected dietary-chip--custom"
+              style={{ background: DIETARY_CHIP_COLOR.bg, color: DIETARY_CHIP_COLOR.text, borderColor: DIETARY_CHIP_COLOR.text }}
+            >
+              {label}
+              <button type="button" className="dietary-chip-remove" onClick={() => remove(label)} aria-label={`Remove ${label}`}>✕</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="ps-dietary-add-row">
+        <input
+          type="text"
+          className="ps-input"
+          value={custom}
+          onChange={e => setCustom(e.target.value)}
+          placeholder='e.g. "no cilantro", "no pork"'
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom() } }}
+        />
+        <button type="button" className="btn-secondary btn-sm" onClick={addCustom} disabled={!custom.trim()}>Add</button>
+      </div>
+
+      <div className="ps-section-label">Options</div>
+      <div className="ps-rows">
+        <div className="ps-row">
+          <div className="ps-row-label">
+            <span className="ps-label">Substitute automatically</span>
+            <span className="ps-desc">When an imported recipe conflicts with your restrictions, swap the ingredients without asking.</span>
+          </div>
+          <button
+            className={`toggle-btn${settings.autoSubstitute ? ' on' : ''}`}
+            onClick={() => onSettingChange('autoSubstitute', !settings.autoSubstitute)}
+            role="switch" aria-checked={!!settings.autoSubstitute}>
+            <span className="toggle-knob" />
+          </button>
+        </div>
+      </div>
+
+      {!hasKey && (
+        <div className="import-key-note" style={{ marginTop: 20 }}>
+          Dietary checks use AI, so they need an API key. Add your Gemini key (free tier) to turn them on.
+          <button type="button" className="btn-secondary btn-sm import-key-note-btn" onClick={() => onNavigate('ai')}>
+            Open AI settings
+          </button>
+        </div>
+      )}
+    </SubPage>
   )
 }
 
